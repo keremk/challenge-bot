@@ -25,9 +25,10 @@ type Challenge struct {
 }
 
 type ChallengeConfig struct {
-	Organization string
-	Owner        string
-	Challenges   []Challenge
+	Organization     string
+	Owner            string
+	TrackingRepoName string
+	Challenges       []Challenge
 }
 
 var configInstance *ChallengeConfig
