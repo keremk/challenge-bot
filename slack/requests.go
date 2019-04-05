@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/keremk/challenge-bot/config"
+	"github.com/keremk/challenge-bot/repo"
 	"github.com/nlopes/slack"
 	slackApi "github.com/nlopes/slack"
 )
@@ -46,5 +47,32 @@ func (handler *requestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	fmt.Println(interactionCB.Submission)
+	challengeDesc := createChallengeDesc(interactionCB.Submission)
+	go handler.createChallenge(challengeDesc, interactionCB.State)
+
 	w.WriteHeader(http.StatusAccepted)
+}
+
+func createChallengeDesc(input map[string]string) *config.ChallengeDesc {
+	return &config.ChallengeDesc{
+		CandidateName:     input["candidate_name"],
+		GithubAlias:       input["github_alias"],
+		ResumeURL:         input["resume_URL"],
+		ChallengeTemplate: input["challenge_template"],
+	}
+}
+
+func (handler *requestHandler) createChallenge(challengeDesc *config.ChallengeDesc, channel string) {
+	handler.slackClient.PostMessage(channel, slack.MsgOptionText("Please be patient, while a go create a coding challenge for you...", false))
+
+	challengeURL, err := repo.CreateChallenge(challengeDesc.GithubAlias, challengeDesc.ChallengeTemplate, *handler.challengeConfig, handler.env.GithubToken)
+
+	if err != nil {
+		fmt.Println(err)
+		errorMsg := fmt.Sprintf("Unable to create challenge for %s", challengeDesc.CandidateName)
+		handler.slackClient.PostMessage(channel, slack.MsgOptionText(errorMsg, false))
+		return
+	}
+	challengeDesc.ChallengeURL = challengeURL
+	handler.slackClient.PostMessage(channel, createChallengeSummary(challengeDesc))
 }

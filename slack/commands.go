@@ -33,16 +33,15 @@ func (handler *commandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			fmt.Println("No trigger ID given")
 			return
 		}
-
-		candidateNameElement := slackApi.NewTextInput("candidateName", "Candidate Name", "")
-		githubNameElement := slackApi.NewTextInput("githubAlias", "Github Alias", "")
-		resumeURLElement := slackApi.NewTextInput("resumeURL", "Resume URL", "")
+		candidateNameElement := slackApi.NewTextInput("candidate_name", "Candidate Name", "")
+		githubNameElement := slackApi.NewTextInput("github_alias", "Github Alias", "")
+		resumeURLElement := slackApi.NewTextInput("resume_URL", "Resume URL", "")
 		options := []slackApi.DialogSelectOption{
 			{Label: "android", Value: "android"},
 			{Label: "ios", Value: "ios"},
 			{Label: "backend", Value: "backend"},
 		}
-		disciplineSelectElement := slackApi.NewStaticSelectDialogInput("templateName", "Challenge Template", options)
+		disciplineSelectElement := slackApi.NewStaticSelectDialogInput("challenge_template", "Challenge Template", options)
 
 		elements := []slackApi.DialogElement{
 			candidateNameElement,
@@ -57,6 +56,7 @@ func (handler *commandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			Title:          "Create Coding Challenge",
 			SubmitLabel:    "Create",
 			NotifyOnCancel: false,
+			State:          s.ChannelID,
 			Elements:       elements,
 		}
 

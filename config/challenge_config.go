@@ -14,12 +14,12 @@ import (
 type Task struct {
 	Level           int8
 	Title           string
-	DescriptionFile string
+	DescriptionFile string `yaml:"descriptionFile"`
 }
 
 type Challenge struct {
 	Discipline       string
-	TemplateRepoName string
+	TemplateRepoName string `yaml:"templateRepoName"`
 	Reviewers        []string
 	Tasks            []Task
 }
@@ -27,7 +27,7 @@ type Challenge struct {
 type ChallengeConfig struct {
 	Organization     string
 	Owner            string
-	TrackingRepoName string
+	TrackingRepoName string `yaml:"trackingRepoName"`
 	Challenges       []Challenge
 }
 
