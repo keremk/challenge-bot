@@ -16,9 +16,25 @@ package repo
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/go-github/github"
 )
+
+func CheckUser(githubAlias string, token string) bool {
+	context := context.Background()
+	tokenClient := getTokenClient(token)
+	client := github.NewClient(tokenClient)
+
+	_, response, err := client.Users.Get(context, githubAlias)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if response.StatusCode == 404 {
+		return false
+	}
+	return true
+}
 
 func createRepository(repoName string, organization string, token string) (string, error) {
 	context := context.Background()
