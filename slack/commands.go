@@ -30,37 +30,15 @@ func (handler *commandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	case "/challenge":
 		if s.TriggerID == "" {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Println("No trigger ID given")
+			fmt.Println("[Error] No trigger ID given")
 			return
 		}
-		candidateNameElement := slackApi.NewTextInput("candidate_name", "Candidate Name", "")
-		githubNameElement := slackApi.NewTextInput("github_alias", "Github Alias", "")
-		resumeURLElement := slackApi.NewTextInput("resume_URL", "Resume URL", "")
-		options := []slackApi.DialogSelectOption{
-			{Label: "android", Value: "android"},
-			{Label: "ios", Value: "ios"},
-			{Label: "backend", Value: "backend"},
-		}
-		disciplineSelectElement := slackApi.NewStaticSelectDialogInput("challenge_template", "Challenge Template", options)
 
-		elements := []slackApi.DialogElement{
-			candidateNameElement,
-			githubNameElement,
-			resumeURLElement,
-			disciplineSelectElement,
-		}
-
-		dialog := &slackApi.Dialog{
-			TriggerID:      s.TriggerID,
-			CallbackID:     "challenge_67e2d0",
-			Title:          "Create Coding Challenge",
-			SubmitLabel:    "Create",
-			NotifyOnCancel: false,
-			State:          s.ChannelID,
-			Elements:       elements,
-		}
-
+		// Immediately return
 		w.WriteHeader(http.StatusOK)
+
+		// Create the dialog and send a message to open it
+		dialog := createDialogWithChallengeOptions(s.TriggerID, s.ChannelID, handler.challengeConfig.AllDisciplines())
 		err := handler.slackClient.OpenDialog(s.TriggerID, *dialog)
 		if err != nil {
 			fmt.Println(err)
@@ -70,5 +48,36 @@ func (handler *commandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 		return
+	}
+}
+
+func createDialogWithChallengeOptions(triggerID string, channelID string, options []string) *slackApi.Dialog {
+	candidateNameElement := slackApi.NewTextInput("candidate_name", "Candidate Name", "")
+	githubNameElement := slackApi.NewTextInput("github_alias", "Github Alias", "")
+	resumeURLElement := slackApi.NewTextInput("resume_URL", "Resume URL", "")
+	selectOptions := make([]slackApi.DialogSelectOption, len(options))
+	for i, v := range options {
+		selectOptions[i] = slackApi.DialogSelectOption{
+			Label: v,
+			Value: v,
+		}
+	}
+	disciplineSelectElement := slackApi.NewStaticSelectDialogInput("challenge_template", "Challenge Template", selectOptions)
+
+	elements := []slackApi.DialogElement{
+		candidateNameElement,
+		githubNameElement,
+		resumeURLElement,
+		disciplineSelectElement,
+	}
+
+	return &slackApi.Dialog{
+		TriggerID:      triggerID,
+		CallbackID:     "challenge_67e2d0",
+		Title:          "Create Coding Challenge",
+		SubmitLabel:    "Create",
+		NotifyOnCancel: false,
+		State:          channelID,
+		Elements:       elements,
 	}
 }

@@ -95,3 +95,11 @@ func (config *ChallengeConfig) FindChallenge(discipline string) (*Challenge, err
 	}
 	return nil, errors.New("Unknown discipline")
 }
+
+func (config *ChallengeConfig) AllDisciplines() []string {
+	disciplines := make([]string, len(config.Challenges))
+	for i, v := range config.Challenges {
+		disciplines[i] = v.Discipline
+	}
+	return disciplines
+}
