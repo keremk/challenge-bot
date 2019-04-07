@@ -1,0 +1,9 @@
+runtime: go111
+
+env_variables:
+  BOT_TOKEN={{index .Vars "BOT_TOKEN"}}
+  VERIFICATION_TOKEN={{index .Vars "VERIFICATION_TOKEN"}}
+  PORT={{index .Vars "PORT"}}
+  GITHUB_TOKEN={{index .Vars "GITHUB_TOKEN"}}
+  GITHUB_OWNER={{index .Vars "GITHUB_OWNER"}}
+  GITHUB_REPO={{index .Vars "GITHUB_REPO"}}
