@@ -70,7 +70,7 @@ func (handler *requestHandler) createChallenge(challengeDesc *config.ChallengeDe
 		return
 	}
 
-	handler.slackClient.PostMessage(channel, slack.MsgOptionText("Please be patient, while a go create a coding challenge for you...", false))
+	handler.slackClient.PostMessage(channel, slack.MsgOptionText("Please be patient, while I go create a coding challenge for you...", false))
 
 	challengeURL, err := repo.CreateChallenge(challengeDesc.GithubAlias, challengeDesc.ChallengeTemplate, *handler.challengeConfig, handler.env.GithubToken)
 
