@@ -2,15 +2,20 @@ package slack
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/keremk/challenge-bot/config"
 	slackApi "github.com/nlopes/slack"
 )
 
 func SetupSlackListeners() {
-	challengeConfig := config.GetChallengeConfig()
-	env := config.GetEnvironment()
+	env := config.NewEnvironment("production")
+	challengeConfig, err := config.NewChallengeConfig(env, config.NewGithubChallengeReader())
+	if err != nil {
+		log.Fatalln("[ERROR] Configuration cannot be retrieved ", err)
+	}
 
 	client := slackApi.New(env.BotToken)
 
@@ -30,6 +35,13 @@ func SetupSlackListeners() {
 		challengeConfig: challengeConfig,
 		env:             env,
 	})
-	fmt.Println("[INFO] Server listening")
-	http.ListenAndServe(":4390", nil)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+		log.Printf("[INFO] Defaulting to port %s and listening", port)
+	}
+
+	log.Printf("[INFO] Listening on port %s", port)
+	http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
 }

@@ -16,21 +16,10 @@ package repo
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
-	homedir "github.com/mitchellh/go-homedir"
 	"golang.org/x/oauth2"
 )
-
-func GenerateChannelFolderPath() (string, error) {
-	home, err := homedir.Dir()
-	if err != nil {
-		return "", err
-	}
-
-	return home + "/.coding-challenges", err
-}
 
 func getTokenClient(token string) *http.Client {
 	context := context.Background()
@@ -44,27 +33,4 @@ func getTokenClient(token string) *http.Client {
 
 func generateChallengeRepositoryName(candidateName string, discipline string) string {
 	return "test_" + discipline + "_" + candidateName
-}
-
-func generateTemplateRepositoryURL(owner string, organization string, templateRepoName string) string {
-	formatString := "https://github.com/%v/%v.git"
-	accountName := ownerOrOrganization(owner, organization)
-	return fmt.Sprintf(formatString, accountName, templateRepoName)
-}
-
-func ownerOrOrganization(owner string, organization string) string {
-	if organization != "" {
-		return organization
-	} else {
-		return owner
-	}
-}
-
-func generateTaskDescriptionFilePath(relativePath string) (string, error) {
-	folderPath, err := GenerateChannelFolderPath()
-	if err != nil {
-		return "", err
-	}
-
-	return folderPath + "/issue-templates/" + relativePath, err
 }

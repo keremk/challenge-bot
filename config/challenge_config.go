@@ -3,10 +3,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"sync"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -25,66 +21,41 @@ type Challenge struct {
 }
 
 type ChallengeConfig struct {
-	Organization     string
-	Owner            string
-	TrackingRepoName string `yaml:"trackingRepoName"`
-	Challenges       []Challenge
+	Organization           string
+	Owner                  string
+	TrackingRepoName       string `yaml:"trackingRepoName"`
+	GithubToken            string
+	SlackBotToken          string
+	SlackVerificationToken string
+	Challenges             []Challenge
+	reader                 ChallengeReader
 }
 
-var configInstance *ChallengeConfig
-var configOnce sync.Once
-
-func GetChallengeConfig() *ChallengeConfig {
-	configOnce.Do(func() {
-		configInstance = &ChallengeConfig{}
-		err := configInstance.readContentsFromGithub()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-	})
-	return configInstance
+type ChallengeReader interface {
+	Read(url string, token string) ([]byte, error)
 }
 
-func (config *ChallengeConfig) readContentsFromGithub() error {
-	client := &http.Client{}
-	env := GetEnvironment()
-
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/challenge.yaml", env.GithubOwner, env.GithubRepo)
-
-	// Ex: https://api.github.com/repos/xing/coding-challenges/contents/challenge.yaml
-	req, err := http.NewRequest("GET", url, nil)
+func NewChallengeConfig(env *Environment, reader ChallengeReader) (*ChallengeConfig, error) {
+	url := challengeURL(env.GithubOwner, env.GithubRepo)
+	contents, err := reader.Read(url, env.GithubToken)
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return nil, err
 	}
 
-	token := fmt.Sprintf("token %s", env.GithubToken)
-	req.Header.Add("Authorization", token)
-	req.Header.Add("Accept", "application/vnd.github.v3.raw")
-
-	resp, err := client.Do(req)
+	challengeConfig := &ChallengeConfig{}
+	err = yaml.Unmarshal(contents, challengeConfig)
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return nil, err
 	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	fmt.Println(string(body))
-
-	err = yaml.Unmarshal(body, config)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	fmt.Println(config.Owner)
-	return err
+	challengeConfig.Owner = env.GithubOwner
+	challengeConfig.TrackingRepoName = env.GithubRepo
+	challengeConfig.GithubToken = env.GithubToken
+	challengeConfig.SlackBotToken = env.BotToken
+	challengeConfig.SlackVerificationToken = env.VerificationToken
+	challengeConfig.reader = reader
+	return challengeConfig, err
 }
 
 func (config *ChallengeConfig) FindChallenge(discipline string) (*Challenge, error) {
@@ -102,4 +73,53 @@ func (config *ChallengeConfig) AllDisciplines() []string {
 		disciplines[i] = v.Discipline
 	}
 	return disciplines
+}
+
+func (config *ChallengeConfig) AccountName() string {
+	if config.Organization != "" {
+		return config.Organization
+	} else {
+		return config.Owner
+	}
+}
+
+func (config *ChallengeConfig) TemplateRepositoryURL(discipline string) (string, error) {
+	challenge, err := config.FindChallenge(discipline)
+	if err != nil {
+		return "", err
+	}
+
+	url := fmt.Sprintf("https://github.com/%v/%v.git", config.AccountName(), challenge.TemplateRepoName)
+	return url, nil
+}
+
+func (config *ChallengeConfig) LoadTask(discipline string, level int) (string, string, error) {
+	challenge, err := config.FindChallenge(discipline)
+	if err != nil {
+		fmt.Println("[ERROR] Invalid challenge discipline ", discipline)
+		return "", "", err
+	}
+
+	if level >= len(challenge.Tasks) {
+		fmt.Println("No task specified for the level ", level)
+		return "", "", err
+	}
+
+	task := challenge.Tasks[level]
+	url := taskDescriptionURL(config.Owner, config.TrackingRepoName, task.DescriptionFile)
+	taskContents, err := config.reader.Read(url, config.GithubToken)
+	if err != nil {
+		fmt.Println("Cannot read task contents ", err)
+		return "", task.Title, err
+	}
+	return string(taskContents), task.Title, nil
+}
+
+func challengeURL(owner string, repo string) string {
+	// Ex: https://api.github.com/repos/xing/coding-challenges/contents/challenge.yaml
+	return fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/challenge.yaml", owner, repo)
+}
+
+func taskDescriptionURL(owner string, repo string, filepath string) string {
+	return fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, repo, filepath)
 }

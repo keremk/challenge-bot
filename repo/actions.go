@@ -42,13 +42,11 @@ func CreateChallenge(candidateName string, discipline string, challengeConfig co
 	}
 	fmt.Println("Created: ", challengeRepoURL)
 
-	challenge, err := challengeConfig.FindChallenge(discipline)
+	templateRepoURL, err := challengeConfig.TemplateRepositoryURL(discipline)
 	if err != nil {
 		fmt.Println("Invalid challenge discipline ", discipline)
 		return challengeRepoURL, err
 	}
-
-	templateRepoURL := generateTemplateRepositoryURL(challengeConfig.Owner, challengeConfig.Organization, challenge.TemplateRepoName)
 	fmt.Println(templateRepoURL)
 
 	err = pushStarterProject(templateRepoURL, challengeRepoURL, token)
@@ -73,8 +71,7 @@ func CreateChallenge(candidateName string, discipline string, challengeConfig co
 		return challengeRepoURL, err
 	}
 
-	accountName := ownerOrOrganization(challengeConfig.Owner, challengeConfig.Organization)
-	err = addCollaborator(candidateName, accountName, repoName, token)
+	err = addCollaborator(candidateName, challengeConfig.AccountName(), repoName, token)
 
 	if err != nil {
 		fmt.Println("Cannot add the candidate as a collaborator ", candidateName)
@@ -89,41 +86,20 @@ func CreateChallenge(candidateName string, discipline string, challengeConfig co
 func createCandidateTask(candidateName string, discipline string, level int, challengeConfig config.ChallengeConfig, token string) error {
 	fmt.Println("Creating candidate task")
 
-	challenge, err := challengeConfig.FindChallenge(discipline)
-	if err != nil {
-		fmt.Println("Invalid challenge discipline ", discipline)
-		return err
-	}
+	description, title, err := challengeConfig.LoadTask(discipline, level)
 
-	if level >= len(challenge.Tasks) {
-		fmt.Println("No task specified for the level ", level)
-		return err
-	}
-
-	task := challenge.Tasks[level]
-	descriptionFilePath, err := generateTaskDescriptionFilePath(challenge.Tasks[level].DescriptionFile)
 	if err != nil {
-		fmt.Println("Cannot create the description file path")
-		fmt.Println(err)
-		return err
-	}
-
-	description, err := readDescription(descriptionFilePath)
-	if err != nil {
-		fmt.Println("Aborting task creation")
-		fmt.Println(err)
 		return err
 	}
 
 	issue := Issue{
-		Title:       task.Title,
+		Title:       title,
 		Discipline:  discipline,
 		Description: description,
 	}
 
 	repoName := generateChallengeRepositoryName(candidateName, discipline)
-	accountName := ownerOrOrganization(challengeConfig.Owner, challengeConfig.Organization)
-	err = createIssue(issue, accountName, repoName, token)
+	err = createIssue(issue, challengeConfig.AccountName(), repoName, token)
 
 	if err != nil {
 		fmt.Println("Could not create a candidate task at ", repoName)
@@ -143,8 +119,7 @@ func createTrackingIssue(candidateName string, discipline string, challengeRepoU
 		Discipline:  discipline,
 		Description: description,
 	}
-	accountName := ownerOrOrganization(challengeConfig.Owner, challengeConfig.Organization)
-	err := createIssue(issue, accountName, challengeConfig.TrackingRepoName, token)
+	err := createIssue(issue, challengeConfig.AccountName(), challengeConfig.TrackingRepoName, token)
 
 	if err != nil {
 		fmt.Println("Could not create a tracking issue at ", challengeConfig.TrackingRepoName)
