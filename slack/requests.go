@@ -63,7 +63,9 @@ func createChallengeDesc(input map[string]string) *config.ChallengeDesc {
 }
 
 func (handler *requestHandler) createChallenge(challengeDesc *config.ChallengeDesc, channel string) {
-	if repo.CheckUser(challengeDesc.GithubAlias, handler.env.GithubToken) == false {
+	ctx := repo.NewActionContext(handler.challengeConfig)
+
+	if ctx.CheckUser(challengeDesc.GithubAlias) == false {
 		fmt.Println("Github user does not exist")
 		errorMsg := fmt.Sprintf("Github Alias %s for candidate %s is not correct", challengeDesc.GithubAlias, challengeDesc.CandidateName)
 		handler.slackClient.PostMessage(channel, slack.MsgOptionText(errorMsg, false))
@@ -72,7 +74,7 @@ func (handler *requestHandler) createChallenge(challengeDesc *config.ChallengeDe
 
 	handler.slackClient.PostMessage(channel, slack.MsgOptionText("Please be patient, while I go create a coding challenge for you...", false))
 
-	challengeURL, err := repo.CreateChallenge(challengeDesc.GithubAlias, challengeDesc.ChallengeTemplate, *handler.challengeConfig, handler.env.GithubToken)
+	challengeURL, err := ctx.CreateChallenge(challengeDesc.GithubAlias, challengeDesc.ChallengeTemplate)
 
 	if err != nil {
 		fmt.Println(err)

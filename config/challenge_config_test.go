@@ -1,67 +1,18 @@
 package config
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-type MockChallengeConfigReader struct {
-	t                 *testing.T
-	checkConfigURL    bool
-	checkTaskURL      bool
-	expectedConfigURL string
-	expectedTaskURL   string
-}
-
-func (c *MockChallengeConfigReader) Read(url string, token string) ([]byte, error) {
-	var output string
-	if strings.HasSuffix(url, "challenge.yaml") {
-		if c.checkConfigURL {
-			assert.Equal(c.t, c.expectedConfigURL, url, "Config URL is not correct")
-		}
-		// Mock returns the challenge.yaml
-		output = `
-organization: "ORG"
-challenges:
-  - discipline: android
-    templateRepoName: challenge-test
-    reviewers:
-      - reviewer1
-      - reviewer2
-    tasks:
-      - level: 1
-        title: "Do this first task"
-        descriptionFile: "test/android/task-1.md"
-      - level: 2
-        title: "Now do the second task"
-        descriptionFile: "test/android/task-2.md"
-  - discipline: ios
-    templateRepoName: challenge-test
-`
-	} else {
-		// Assert the url
-		if c.checkTaskURL {
-			assert.Equal(c.t, c.expectedTaskURL, url, "Task URL is not correct")
-		}
-		// Mock returns a task description
-		output = `
-## Task
-Your first task consists of reading this document. Please read it!
-`
-	}
-
-	return []byte(output), nil
-}
-
 func TestLoadingChallengeConfig(t *testing.T) {
 	env := NewEnvironment("unittest")
 	mockReader := &MockChallengeConfigReader{
-		t:                 t,
-		checkConfigURL:    true,
-		checkTaskURL:      false,
-		expectedConfigURL: "https://api.github.com/repos/Owner/challenge-bot/contents/challenge.yaml",
+		T:                 t,
+		CheckConfigURL:    true,
+		CheckTaskURL:      false,
+		ExpectedConfigURL: "https://api.github.com/repos/Owner/challenge-bot/contents/challenge.yaml",
 	}
 
 	challengeConfig, err := NewChallengeConfig(env, mockReader)
@@ -93,9 +44,9 @@ func TestLoadingChallengeConfig(t *testing.T) {
 func TestFindingChallenge(t *testing.T) {
 	env := NewEnvironment("unittest")
 	mockReader := &MockChallengeConfigReader{
-		t:              t,
-		checkConfigURL: false,
-		checkTaskURL:   false,
+		T:              t,
+		CheckConfigURL: false,
+		CheckTaskURL:   false,
 	}
 
 	challengeConfig, err := NewChallengeConfig(env, mockReader)
@@ -113,9 +64,9 @@ func TestFindingChallenge(t *testing.T) {
 func TestGettingAllDisciplines(t *testing.T) {
 	env := NewEnvironment("unittest")
 	mockReader := &MockChallengeConfigReader{
-		t:              t,
-		checkConfigURL: false,
-		checkTaskURL:   false,
+		T:              t,
+		CheckConfigURL: false,
+		CheckTaskURL:   false,
 	}
 
 	challengeConfig, _ := NewChallengeConfig(env, mockReader)
@@ -130,9 +81,9 @@ func TestGettingAllDisciplines(t *testing.T) {
 func TestChallengeRepoURL(t *testing.T) {
 	env := NewEnvironment("unittest")
 	mockReader := &MockChallengeConfigReader{
-		t:              t,
-		checkConfigURL: false,
-		checkTaskURL:   false,
+		T:              t,
+		CheckConfigURL: false,
+		CheckTaskURL:   false,
 	}
 	challengeConfig, _ := NewChallengeConfig(env, mockReader)
 
@@ -144,10 +95,10 @@ func TestChallengeRepoURL(t *testing.T) {
 func TestLoadingTask(t *testing.T) {
 	env := NewEnvironment("unittest")
 	mockReader := &MockChallengeConfigReader{
-		t:               t,
-		checkConfigURL:  false,
-		checkTaskURL:    true,
-		expectedTaskURL: "https://api.github.com/repos/Owner/challenge-bot/contents/test/android/task-1.md",
+		T:               t,
+		CheckConfigURL:  false,
+		CheckTaskURL:    true,
+		ExpectedTaskURL: "https://api.github.com/repos/Owner/challenge-bot/contents/test/android/task-1.md",
 	}
 	challengeConfig, _ := NewChallengeConfig(env, mockReader)
 

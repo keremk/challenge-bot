@@ -16,19 +16,21 @@ package repo
 
 import (
 	"context"
-	"fmt"
+	"log"
 
 	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 )
 
-func CheckUser(githubAlias string, token string) bool {
-	context := context.Background()
-	tokenClient := getTokenClient(token)
-	client := github.NewClient(tokenClient)
+type githubOps struct {
+	token string
+}
 
+func (ctx githubOps) checkUser(githubAlias string) bool {
+	client, context := ctx.getClient()
 	_, response, err := client.Users.Get(context, githubAlias)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	if response.StatusCode == 404 {
 		return false
@@ -36,17 +38,16 @@ func CheckUser(githubAlias string, token string) bool {
 	return true
 }
 
-func createRepository(repoName string, organization string, token string) (string, error) {
-	context := context.Background()
-
+// createRepository call always take the Organization name, it's implementation takes into account
+// if the organization is an empty string and creates a different url altogether
+func (ctx githubOps) createRepository(repoName string, organization string) (string, error) {
 	private := true
 	repositoryInput := github.Repository{
 		Name:    &repoName,
 		Private: &private,
 	}
 
-	tokenClient := getTokenClient(token)
-	client := github.NewClient(tokenClient)
+	client, context := ctx.getClient()
 	repository, _, err := client.Repositories.Create(context, organization, &repositoryInput)
 	if err != nil {
 		return "", err
@@ -55,34 +56,41 @@ func createRepository(repoName string, organization string, token string) (strin
 	return *repository.CloneURL, nil
 }
 
-func createIssue(issue Issue, accountName string, repoName string, token string) error {
-	context := context.Background()
-
+func (ctx githubOps) createIssue(issue Issue, accountName string, repoName string) error {
 	issueRequest := github.IssueRequest{
 		Title:  &issue.Title,
 		Body:   &issue.Description,
 		Labels: &[]string{issue.Discipline},
 	}
 
-	tokenClient := getTokenClient(token)
-	client := github.NewClient(tokenClient)
-
+	client, context := ctx.getClient()
 	_, _, err := client.Issues.Create(context, accountName, repoName, &issueRequest)
-
 	return err
 }
 
-func addCollaborator(githubName string, accountName string, repoName string, token string) error {
-	context := context.Background()
-
-	tokenClient := getTokenClient(token)
-	client := github.NewClient(tokenClient)
-
+func (ctx githubOps) addCollaborator(githubName string, accountName string, repoName string) error {
+	client, context := ctx.getClient()
 	options := github.RepositoryAddCollaboratorOptions{
 		Permission: "push",
 	}
 
 	_, err := client.Repositories.AddCollaborator(context, accountName, repoName, githubName, &options)
-
 	return err
+}
+
+func (ctx githubOps) pushStarterRepo(templateRepoURL string, remoteRepoURL string) error {
+	gitops := &gitOps{
+		token: ctx.token,
+	}
+
+	return gitops.pushStarterRepo(templateRepoURL, remoteRepoURL)
+}
+
+func (ctx githubOps) getClient() (*github.Client, context.Context) {
+	context := context.Background()
+	tokenService := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: ctx.token},
+	)
+	tokenClient := oauth2.NewClient(context, tokenService)
+	return github.NewClient(tokenClient), context
 }

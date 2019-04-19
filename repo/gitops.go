@@ -15,7 +15,7 @@
 package repo
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	git "gopkg.in/src-d/go-git.v4"
@@ -24,21 +24,25 @@ import (
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 )
 
-func pushStarterProject(templateRepoURL string, remoteRepoURL string, token string) error {
-	repository, err := cloneRepository(templateRepoURL, token)
+type gitOps struct {
+	token string
+}
+
+func (ctx gitOps) pushStarterRepo(templateRepoURL string, remoteRepoURL string) error {
+	repository, err := ctx.cloneRepository(templateRepoURL)
 	if err != nil {
-		fmt.Println("Cannot clone repository")
+		log.Println("Cannot clone repository")
 		return err
 	}
 
-	return createAndPushToRemote(remoteRepoURL, repository, token)
+	return ctx.createAndPushToRemote(remoteRepoURL, repository)
 }
 
-func cloneRepository(repoURL string, token string) (*git.Repository, error) {
+func (ctx gitOps) cloneRepository(repoURL string) (*git.Repository, error) {
 	repository, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
 		Auth: &auth.BasicAuth{
 			Username: "abc123", // yes, this can be anything except an empty string
-			Password: token,
+			Password: ctx.token,
 		},
 		URL:      repoURL,
 		Progress: os.Stdout,
@@ -47,14 +51,14 @@ func cloneRepository(repoURL string, token string) (*git.Repository, error) {
 	return repository, err
 }
 
-func createAndPushToRemote(remoteRepoURL string, repository *git.Repository, token string) error {
+func (ctx gitOps) createAndPushToRemote(remoteRepoURL string, repository *git.Repository) error {
 	newRepo, err := repository.CreateRemote(&gitConfig.RemoteConfig{
 		Name: "candidate",
 		URLs: []string{remoteRepoURL},
 	})
 
 	if err != nil {
-		fmt.Println("Cannot create a remote")
+		log.Println("Cannot create a remote")
 		return err
 	}
 
@@ -62,7 +66,7 @@ func createAndPushToRemote(remoteRepoURL string, repository *git.Repository, tok
 		RemoteName: "candidate",
 		Auth: &auth.BasicAuth{
 			Username: "abc123", // yes, this can be anything except an empty string
-			Password: token,
+			Password: ctx.token,
 		},
 		Progress: os.Stdout,
 	})
