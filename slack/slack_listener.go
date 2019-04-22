@@ -24,13 +24,7 @@ func SetupSlackListeners() {
 		challengeConfig: challengeConfig,
 		env:             env,
 	})
-	http.Handle("/requests", &requestHandler{
-		slackClient:     client,
-		challengeConfig: challengeConfig,
-		env:             env,
-	})
-
-	http.Handle("/events", &eventsHandler{
+	http.Handle("/requests", &dialogHandler{
 		slackClient:     client,
 		challengeConfig: challengeConfig,
 		env:             env,

@@ -3,11 +3,11 @@ package slack
 import (
 	"fmt"
 
-	"github.com/keremk/challenge-bot/config"
+	"github.com/keremk/challenge-bot/models"
 	"github.com/nlopes/slack"
 )
 
-func createChallengeSummary(challengeDesc *config.ChallengeDesc) slack.MsgOption {
+func newChallengeSummary(challengeDesc *models.ChallengeDesc) slack.MsgOption {
 	// Header Section
 	headerText := fmt.Sprintf("You have created a new coding challenge at:\n*<%s|%s>*", challengeDesc.ChallengeURL, challengeDesc.ChallengeURL)
 	headerTextBlock := slack.NewTextBlockObject("mrkdwn", headerText, false, false)
