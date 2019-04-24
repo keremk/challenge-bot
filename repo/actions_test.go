@@ -3,6 +3,8 @@ package repo
 import (
 	"testing"
 
+	"github.com/keremk/challenge-bot/models"
+
 	"github.com/keremk/challenge-bot/config"
 	"github.com/stretchr/testify/assert"
 )
@@ -100,9 +102,11 @@ Your first task consists of reading this document. Please read it!
 		},
 		createIssueAssertion2: func(issue Issue, accountName string, repoName string) {
 			expectedIssue := Issue{
-				Title: "Coding Challenge for: testuser",
+				Title: "Coding Challenge for: Test User",
 				Description: `
-Coding challenge is located at: http://github.com/example
+Github Alias: testuser
+Coding Challenge Link: http://github.com/example
+Resume Link: http://example.com/testuser
 `,
 				Discipline: "android",
 			}
@@ -130,7 +134,14 @@ Coding challenge is located at: http://github.com/example
 		RepoOps:         mockOps,
 	}
 
-	url, err := ctx.CreateChallenge("testuser", "android")
+	challengeDesc := models.ChallengeDesc{
+		CandidateName:     "Test User",
+		ChallengeTemplate: "android",
+		GithubAlias:       "testuser",
+		ResumeURL:         "http://example.com/testuser",
+	}
+
+	url, err := ctx.CreateChallenge(challengeDesc)
 	assert.Nil(t, err, "Unexpected error")
 	assert.Equal(t, "http://github.com/example", url, "url is not correct")
 	assert.Equal(t, 1, mockOps.createRepositoryCalled, "create repository operation not called")

@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/keremk/challenge-bot/models"
+
 	"github.com/keremk/challenge-bot/config"
 )
 
@@ -53,29 +55,29 @@ func (ctx ActionContext) CheckUser(githubAlias string) bool {
 
 // Creates a coding challenge for a given candidate and challenge type.
 // The coding challenge is created based on the configuration settings the .challenge.yaml file
-func (ctx ActionContext) CreateChallenge(candidateName string, discipline string) (string, error) {
-	repoName := fmt.Sprintf(challengeRepoFormat, candidateName, discipline)
-	challengeRepoURL, err := ctx.createStarterRepo(repoName, discipline)
+func (ctx ActionContext) CreateChallenge(challengeDesc models.ChallengeDesc) (string, error) {
+	repoName := fmt.Sprintf(challengeRepoFormat, challengeDesc.GithubAlias, challengeDesc.ChallengeTemplate)
+	challengeRepoURL, err := ctx.createStarterRepo(repoName, challengeDesc.ChallengeTemplate)
 	if err != nil {
-		log.Println("[ERROR] Cannot create starter repo for candidate ", candidateName)
+		log.Println("[ERROR] Cannot create starter repo for candidate ", challengeDesc.GithubAlias)
 		return "", err
 	}
 
-	err = ctx.createCandidateTask(repoName, discipline, starterTaskNo)
+	err = ctx.createCandidateTask(repoName, challengeDesc.ChallengeTemplate, starterTaskNo)
 	if err != nil {
-		log.Println("[ERROR] Can not create candidate task for ", candidateName)
+		log.Println("[ERROR] Can not create candidate task for ", challengeDesc.GithubAlias)
 		return challengeRepoURL, err
 	}
 
-	err = ctx.createTrackingIssue(candidateName, discipline, challengeRepoURL)
+	err = ctx.createTrackingIssue(challengeDesc, challengeRepoURL)
 	if err != nil {
-		log.Println("[ERROR] Could not create tracking issue for ", candidateName)
+		log.Println("[ERROR] Could not create tracking issue for ", challengeDesc.GithubAlias)
 		return challengeRepoURL, err
 	}
 
-	err = ctx.addCollaborator(candidateName, repoName)
+	err = ctx.addCollaborator(challengeDesc.GithubAlias, repoName)
 	if err != nil {
-		log.Println("[ERROR] Cannot add the candidate as a collaborator ", candidateName)
+		log.Println("[ERROR] Cannot add the candidate as a collaborator ", challengeDesc.GithubAlias)
 		return challengeRepoURL, err
 	}
 
@@ -127,16 +129,18 @@ func (ctx ActionContext) createCandidateTask(repoName string, discipline string,
 	return nil
 }
 
-func (ctx ActionContext) createTrackingIssue(candidateName string, discipline string, challengeRepoURL string) error {
-	title := "Coding Challenge for: " + candidateName
+func (ctx ActionContext) createTrackingIssue(challengeDesc models.ChallengeDesc, challengeRepoURL string) error {
+	title := "Coding Challenge for: " + challengeDesc.CandidateName
 	descriptionFormat := `
-Coding challenge is located at: %s
+Github Alias: %s
+Coding Challenge Link: %s
+Resume Link: %s
 `
 
-	description := fmt.Sprintf(descriptionFormat, challengeRepoURL)
+	description := fmt.Sprintf(descriptionFormat, challengeDesc.GithubAlias, challengeRepoURL, challengeDesc.ResumeURL)
 	issue := Issue{
 		Title:       title,
-		Discipline:  discipline,
+		Discipline:  challengeDesc.ChallengeTemplate,
 		Description: description,
 	}
 	trackingRepoName := ctx.ChallengeConfig.TrackingRepoName

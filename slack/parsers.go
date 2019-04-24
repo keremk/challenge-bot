@@ -22,20 +22,20 @@ type ResponseParser struct {
 	VerificationToken string
 }
 
-func (r ResponseParser) DialogResponseParse(readCloser io.ReadCloser) (*models.ChallengeDesc, string, error) {
+func (r ResponseParser) DialogResponseParse(readCloser io.ReadCloser) (models.ChallengeDesc, string, error) {
 	payload, err := payloadContents(readCloser)
 	if err != nil {
-		return nil, "", err
+		return models.ChallengeDesc{}, "", err
 	}
 
 	var icb slackApi.InteractionCallback
 	err = json.Unmarshal([]byte(payload), &icb)
 	if err != nil {
-		return nil, "", err
+		return models.ChallengeDesc{}, "", err
 	}
 
 	if icb.Token != r.VerificationToken {
-		return nil, "", ValidationError{}
+		return models.ChallengeDesc{}, "", ValidationError{}
 	}
 
 	return models.NewChallengeDesc(icb.Submission), icb.State, nil

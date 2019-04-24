@@ -61,12 +61,11 @@ func TestDialogResponse(t *testing.T) {
 		VerificationToken: "M1AqUUw3FqayAbqNtsGMch72",
 	}
 
-	expectedDesc := &models.ChallengeDesc{
+	expectedDesc := models.ChallengeDesc{
 		CandidateName:     "Sigourney Dreamweaver",
 		GithubAlias:       "sigdre",
 		ResumeURL:         "https://example.com",
 		ChallengeTemplate: "android_repo",
-		ChallengeURL:      "",
 	}
 
 	challengeDesc, channel, err := r.DialogResponseParse(MockDialogResponse())

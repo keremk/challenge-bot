@@ -7,9 +7,9 @@ import (
 	"github.com/nlopes/slack"
 )
 
-func newChallengeSummary(challengeDesc *models.ChallengeDesc) slack.MsgOption {
+func newChallengeSummary(challengeDesc models.ChallengeDesc, challengeURL string) slack.MsgOption {
 	// Header Section
-	headerText := fmt.Sprintf("You have created a new coding challenge at:\n*<%s|%s>*", challengeDesc.ChallengeURL, challengeDesc.ChallengeURL)
+	headerText := fmt.Sprintf("You have created a new coding challenge at:\n*<%s|%s>*", challengeURL, challengeURL)
 	headerTextBlock := slack.NewTextBlockObject("mrkdwn", headerText, false, false)
 	headerSection := slack.NewSectionBlock(headerTextBlock, nil, nil)
 
