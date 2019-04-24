@@ -35,10 +35,13 @@ func (handler *commandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	switch s.Command {
 	case "/challenge":
+		log.Println("[INFO] Challenge command is invoked")
+		fallthrough
 	case "/challengetest":
 		// Immediately return
 		w.WriteHeader(http.StatusOK)
 
+		log.Println("[INFO] Creating dialog")
 		// Create the dialog and send a message to open it
 		dialog := newChallengeOptionsDialog(s.TriggerID, s.ChannelID, handler.challengeConfig.AllDisciplines())
 		err := handler.slackClient.OpenDialog(s.TriggerID, *dialog)
