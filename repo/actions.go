@@ -57,25 +57,25 @@ func (ctx ActionContext) CreateChallenge(candidateName string, discipline string
 	repoName := fmt.Sprintf(challengeRepoFormat, candidateName, discipline)
 	challengeRepoURL, err := ctx.createStarterRepo(repoName, discipline)
 	if err != nil {
-		log.Println("Cannot create starter repo for candidate ", candidateName)
+		log.Println("[ERROR] Cannot create starter repo for candidate ", candidateName)
 		return "", err
 	}
 
 	err = ctx.createCandidateTask(repoName, discipline, starterTaskNo)
 	if err != nil {
-		log.Println("Can not create candidate task for ", candidateName)
+		log.Println("[ERROR] Can not create candidate task for ", candidateName)
 		return challengeRepoURL, err
 	}
 
 	err = ctx.createTrackingIssue(candidateName, discipline, challengeRepoURL)
 	if err != nil {
-		log.Println("Could not create tracking issue for ", candidateName)
+		log.Println("[ERROR] Could not create tracking issue for ", candidateName)
 		return challengeRepoURL, err
 	}
 
 	err = ctx.addCollaborator(candidateName, repoName)
 	if err != nil {
-		log.Println("Cannot add the candidate as a collaborator ", candidateName)
+		log.Println("[ERROR] Cannot add the candidate as a collaborator ", candidateName)
 		return challengeRepoURL, err
 	}
 
@@ -85,7 +85,7 @@ func (ctx ActionContext) CreateChallenge(candidateName string, discipline string
 func (ctx ActionContext) createStarterRepo(repoName string, discipline string) (string, error) {
 	templateRepoURL, err := ctx.ChallengeConfig.TemplateRepositoryURL(discipline)
 	if err != nil {
-		log.Println("Cannot find template repository url for ", discipline)
+		log.Println("[ERROR] Cannot find template repository url for ", discipline)
 		return "", err
 	}
 
@@ -93,13 +93,13 @@ func (ctx ActionContext) createStarterRepo(repoName string, discipline string) (
 
 	challengeRepoURL, err := ctx.RepoOps.createRepository(repoName, organization)
 	if err != nil {
-		log.Println("Cannot create a new repository, ", err)
+		log.Println("[ERROR] Cannot create a new repository, ", err)
 		return "", err
 	}
 
 	err = ctx.RepoOps.pushStarterRepo(templateRepoURL, challengeRepoURL)
 	if err != nil {
-		log.Println("Could not push the starter repository, ", err)
+		log.Println("[ERROR] Could not push the starter repository, ", err)
 		return challengeRepoURL, err
 	}
 
@@ -144,7 +144,7 @@ Coding challenge is located at: %s
 
 	err := ctx.RepoOps.createIssue(issue, accountName, trackingRepoName)
 	if err != nil {
-		log.Println("Could not create a tracking issue at ", trackingRepoName)
+		log.Println("[ERROR] Could not create a tracking issue at ", trackingRepoName)
 		return err
 	}
 	return nil
