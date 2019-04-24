@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -17,7 +18,6 @@ func (c *GithubChallengeReader) Read(url string, token string) ([]byte, error) {
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -27,7 +27,7 @@ func (c *GithubChallengeReader) Read(url string, token string) ([]byte, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		log.Println("[ERROR] Github endpoint failed ", err)
 		return nil, err
 	}
 
@@ -35,7 +35,7 @@ func (c *GithubChallengeReader) Read(url string, token string) ([]byte, error) {
 	body, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Println("[ERROR] Reading response failed ", err)
 		return nil, err
 	}
 

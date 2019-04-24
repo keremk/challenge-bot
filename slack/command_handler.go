@@ -23,9 +23,11 @@ func (handler *commandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		switch err.(type) {
 		case ValidationError:
+			log.Println("[ERROR] Unable to validate command ", err)
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		default:
+			log.Println("[ERROR] Unable to parse command ", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -33,6 +35,7 @@ func (handler *commandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	switch s.Command {
 	case "/challenge":
+	case "/challengetest":
 		// Immediately return
 		w.WriteHeader(http.StatusOK)
 
@@ -40,11 +43,12 @@ func (handler *commandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		dialog := newChallengeOptionsDialog(s.TriggerID, s.ChannelID, handler.challengeConfig.AllDisciplines())
 		err := handler.slackClient.OpenDialog(s.TriggerID, *dialog)
 		if err != nil {
-			log.Println(err)
+			log.Println("[ERROR] Cannot create the dialog ", err)
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
 	default:
+		log.Println("[ERROR] Unexcepted Command ", s.Command)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

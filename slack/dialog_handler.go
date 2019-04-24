@@ -1,6 +1,7 @@
 package slack
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/keremk/challenge-bot/config"
@@ -22,9 +23,11 @@ func (handler *dialogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		switch err.(type) {
 		case ValidationError:
+			log.Println("[ERROR] Unable to validate request ", err)
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		default:
+			log.Println("[ERROR] Unexpected request ", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}

@@ -18,22 +18,22 @@ type Environment struct {
 
 func NewEnvironment(params ...string) *Environment {
 	if len(params) == 0 {
-		log.Println("[Info] using production environment")
+		log.Println("[INFO] using production environment")
 		return getProductionEnv()
 	}
 
 	switch requiredEnv := params[0]; requiredEnv {
 	case "production":
-		log.Println("[Info] using production environment")
+		log.Println("[INFO] using production environment")
 		return getProductionEnv()
 	case "unittest":
-		log.Println("[Info] using unit test environment")
+		log.Println("[INFO] using unit test environment")
 		return getUnitTestEnv()
 	case "integrationtest":
-		log.Println("[Info] using integration test environment")
+		log.Println("[INFO] using integration test environment")
 		return getIntegrationTestEnv()
 	default:
-		log.Println("[Info] using production environment")
+		log.Println("[INFO] using production environment")
 		return getProductionEnv()
 	}
 }
@@ -42,7 +42,7 @@ func getProductionEnv() *Environment {
 	env := &Environment{}
 	err := envconfig.Process("", env)
 	if err != nil {
-		log.Fatalln("[Error] Can not read environment variables ", err)
+		log.Fatalln("[ERROR] Can not read environment variables ", err)
 	}
 	return env
 }

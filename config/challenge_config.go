@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -96,12 +97,12 @@ func (config *ChallengeConfig) TemplateRepositoryURL(discipline string) (string,
 func (config *ChallengeConfig) LoadTask(discipline string, level int) (string, string, error) {
 	challenge, err := config.FindChallenge(discipline)
 	if err != nil {
-		fmt.Println("[ERROR] Invalid challenge discipline ", discipline)
+		log.Println("[ERROR] Invalid challenge discipline ", discipline)
 		return "", "", err
 	}
 
 	if level >= len(challenge.Tasks) {
-		fmt.Println("No task specified for the level ", level)
+		log.Println("[ERROR] No task specified for the level ", level)
 		return "", "", err
 	}
 
@@ -109,7 +110,7 @@ func (config *ChallengeConfig) LoadTask(discipline string, level int) (string, s
 	url := taskDescriptionURL(config.Owner, config.TrackingRepoName, task.DescriptionFile)
 	taskContents, err := config.reader.Read(url, config.GithubToken)
 	if err != nil {
-		fmt.Println("Cannot read task contents ", err)
+		log.Println("[ERROR] Cannot read task contents ", err)
 		return "", task.Title, err
 	}
 	return string(taskContents), task.Title, nil
