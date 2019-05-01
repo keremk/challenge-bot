@@ -14,6 +14,10 @@ type Environment struct {
 	GithubOwner        string `envconfig:"GITHUB_OWNER" required:"true"`
 	GithubOrganization string `envconfig:"GITHUB_ORG" required:"false"`
 	GithubRepo         string `envconfig:"GITHUB_REPO" required:"true"`
+	SlackClientID      string `envconfig:"SLACK_CLIENT_ID" required:"true"`
+	SlackClientSecret  string `envconfig:"SLACK_CLIENT_SECRET" required:"true"`
+	SlackRedirectURI   string `envconfig:"SLACK_REDIRECT_URI" required:"true"`
+	GCloudProjectID    string `envconfig:"GCLOUD_PROJECT_ID" required:"true"`
 }
 
 func NewEnvironment(params ...string) *Environment {
@@ -56,6 +60,10 @@ func getUnitTestEnv() *Environment {
 		GithubOwner:        "Owner",
 		GithubOrganization: "ORG",
 		GithubRepo:         "challenge-bot",
+		SlackClientID:      "Fake",
+		SlackClientSecret:  "Fake",
+		SlackRedirectURI:   "http://example.com",
+		GCloudProjectID:    "coding-challenge-bot",
 	}
 }
 

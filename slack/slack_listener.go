@@ -29,6 +29,10 @@ func SetupSlackListeners() {
 		challengeConfig: challengeConfig,
 		env:             env,
 	})
+	http.Handle("/auth/", http.StripPrefix("/auth/", http.FileServer(http.Dir("./static"))))
+	http.Handle("/auth/redirect", &authHandler{
+		env: env,
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {
