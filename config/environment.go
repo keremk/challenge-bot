@@ -18,6 +18,7 @@ type Environment struct {
 	SlackClientSecret  string `envconfig:"SLACK_CLIENT_SECRET" required:"true"`
 	SlackRedirectURI   string `envconfig:"SLACK_REDIRECT_URI" required:"true"`
 	GCloudProjectID    string `envconfig:"GCLOUD_PROJECT_ID" required:"true"`
+	DbProvider         string `envconfig:"DB_PROVIDER" required:"true"`
 }
 
 func NewEnvironment(params ...string) *Environment {
