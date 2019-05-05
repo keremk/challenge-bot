@@ -22,14 +22,12 @@ type Challenge struct {
 }
 
 type ChallengeConfig struct {
-	Organization           string
-	Owner                  string
-	TrackingRepoName       string `yaml:"trackingRepoName"`
-	GithubToken            string
-	SlackBotToken          string
-	SlackVerificationToken string
-	Challenges             []Challenge
-	reader                 ChallengeReader
+	Organization     string
+	Owner            string
+	TrackingRepoName string `yaml:"trackingRepoName"`
+	GithubToken      string
+	Challenges       []Challenge
+	reader           ChallengeReader
 }
 
 type ChallengeReader interface {
@@ -53,8 +51,6 @@ func NewChallengeConfig(env *Environment, reader ChallengeReader) (*ChallengeCon
 	challengeConfig.Owner = env.GithubOwner
 	challengeConfig.TrackingRepoName = env.GithubRepo
 	challengeConfig.GithubToken = env.GithubToken
-	challengeConfig.SlackBotToken = env.BotToken
-	challengeConfig.SlackVerificationToken = env.VerificationToken
 	challengeConfig.reader = reader
 	return challengeConfig, err
 }
