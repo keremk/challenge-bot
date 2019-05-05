@@ -1,6 +1,6 @@
 package models
 
 type SlackUser struct {
-	SlackID    string
-	SlackToken string
+	ID    string
+	Token string
 }

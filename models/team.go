@@ -14,8 +14,8 @@ type Organization struct {
 }
 
 type SlackTeam struct {
-	Name           string
-	SlackID        string
-	SlackBotToken  string
-	SlackBotUserID string
+	ID        string
+	Name      string
+	BotToken  string
+	BotUserID string
 }

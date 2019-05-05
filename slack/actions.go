@@ -12,33 +12,42 @@ import (
 )
 
 type slackActionContext struct {
-	repoCtx     *repo.ActionContext
-	slackClient *slackApi.Client
+	env     config.Environment
+	repoCtx *repo.ActionContext
+	teamID  string
 }
 
-func newSlackActionContext(challengeConfig *config.ChallengeConfig, slackClient *slackApi.Client) *slackActionContext {
+func newSlackActionContext(challengeConfig *config.ChallengeConfig, teamID string, env config.Environment) *slackActionContext {
 	return &slackActionContext{
-		repoCtx:     repo.NewActionContext(challengeConfig),
-		slackClient: slackClient,
+		env:     env,
+		repoCtx: repo.NewActionContext(challengeConfig),
+		teamID:  teamID,
 	}
 }
 
-func (ctx slackActionContext) createChallenge(challengeDesc models.ChallengeDesc, targetChannel string) {
-	if ctx.repoCtx.CheckUser(challengeDesc.GithubAlias) == false {
-		errorMsg := fmt.Sprintf("Github Alias %s for candidate %s is not correct", challengeDesc.GithubAlias, challengeDesc.CandidateName)
-		ctx.slackClient.PostMessage(targetChannel, slack.MsgOptionText(errorMsg, false))
+func (s slackActionContext) createChallenge(challengeDesc models.ChallengeDesc, targetChannel string) {
+	token, err := getBotToken(s.env, s.teamID)
+	if err != nil {
 		return
 	}
 
-	ctx.slackClient.PostMessage(targetChannel, slack.MsgOptionText("Please be patient, while I go create a coding challenge for you...", false))
+	slackClient := slackApi.New(token)
 
-	challengeURL, err := ctx.repoCtx.CreateChallenge(challengeDesc)
+	if s.repoCtx.CheckUser(challengeDesc.GithubAlias) == false {
+		errorMsg := fmt.Sprintf("Github Alias %s for candidate %s is not correct", challengeDesc.GithubAlias, challengeDesc.CandidateName)
+		slackClient.PostMessage(targetChannel, slack.MsgOptionText(errorMsg, false))
+		return
+	}
+
+	slackClient.PostMessage(targetChannel, slack.MsgOptionText("Please be patient, while I go create a coding challenge for you...", false))
+
+	challengeURL, err := s.repoCtx.CreateChallenge(challengeDesc)
 
 	if err != nil {
 		log.Println("[ERROR] Create challenge failed: ", err)
 		errorMsg := fmt.Sprintf("Unable to create challenge for %s", challengeDesc.CandidateName)
-		ctx.slackClient.PostMessage(targetChannel, slack.MsgOptionText(errorMsg, false))
+		slackClient.PostMessage(targetChannel, slack.MsgOptionText(errorMsg, false))
 		return
 	}
-	ctx.slackClient.PostMessage(targetChannel, newChallengeSummary(challengeDesc, challengeURL))
+	slackClient.PostMessage(targetChannel, newChallengeSummary(challengeDesc, challengeURL))
 }

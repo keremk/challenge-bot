@@ -56,11 +56,7 @@ func MockDialogResponse() io.ReadCloser {
 	return &MockReadCloser{reader}
 }
 
-func TestDialogResponse(t *testing.T) {
-	r := &ResponseParser{
-		VerificationToken: "M1AqUUw3FqayAbqNtsGMch72",
-	}
-
+func TestDialogResponseParser(t *testing.T) {
 	expectedDesc := models.ChallengeDesc{
 		CandidateName:     "Sigourney Dreamweaver",
 		GithubAlias:       "sigdre",
@@ -68,17 +64,20 @@ func TestDialogResponse(t *testing.T) {
 		ChallengeTemplate: "android_repo",
 	}
 
-	challengeDesc, channel, err := r.DialogResponseParse(MockDialogResponse())
+	icb, err := parseChallengeStart(MockDialogResponse(), "M1AqUUw3FqayAbqNtsGMch72")
+	challengeDesc := models.NewChallengeDesc(icb.Submission)
+	returnChannel := icb.State
+	teamID := icb.Team.ID
+
 	assert.Nil(t, err, "Unexpected error")
-	assert.Equal(t, "coding_challenge_channel", channel, "Target channel not correct.")
+	assert.Equal(t, "coding_challenge_channel", returnChannel, "Target channel not correct.")
+	assert.Equal(t, "T1ABCD2E12", teamID, "Team ID is not correct.")
 	assert.Equal(t, expectedDesc, challengeDesc, "Challenge description not correct.")
 }
 
 func TestDialogResponseFailedVerification(t *testing.T) {
-	r := &ResponseParser{
-		VerificationToken: "InvalidToken",
-	}
 
-	_, _, err := r.DialogResponseParse(MockDialogResponse())
+	_, err := parseChallengeStart(MockDialogResponse(), "InvalidToken")
 	assert.NotNil(t, err, "Error expected")
+	assert.IsType(t, ValidationError{}, err, "Validation Error expected")
 }

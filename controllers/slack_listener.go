@@ -1,4 +1,4 @@
-package slack
+package controllers
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/keremk/challenge-bot/config"
-	slackApi "github.com/nlopes/slack"
 )
 
 func SetupSlackListeners() {
@@ -17,17 +16,12 @@ func SetupSlackListeners() {
 		log.Fatalln("[ERROR] Configuration cannot be retrieved ", err)
 	}
 
-	client := slackApi.New(env.BotToken)
-
-	http.Handle("/commands", &commandHandler{
-		slackClient:     client,
-		challengeConfig: challengeConfig,
-		env:             env,
+	http.Handle("/commands", &CommandHandler{
+		env: *env,
 	})
 	http.Handle("/requests", &dialogHandler{
-		slackClient:     client,
 		challengeConfig: challengeConfig,
-		env:             env,
+		env:             *env,
 	})
 	http.Handle("/auth/", http.StripPrefix("/auth/", http.FileServer(http.Dir("./static"))))
 	http.Handle("/auth/redirect", &authHandler{

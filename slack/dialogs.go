@@ -1,8 +1,74 @@
 package slack
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"log"
+	"net/url"
+	"strings"
+
+	"github.com/keremk/challenge-bot/config"
+	"github.com/keremk/challenge-bot/models"
 	slackApi "github.com/nlopes/slack"
 )
+
+func HandleDialogResponse(env config.Environment, readCloser io.ReadCloser, challenge *config.ChallengeConfig) error {
+	icb, err := parseChallengeStart(readCloser, env.VerificationToken)
+	if err != nil {
+		return err
+	}
+
+	challengeDesc := models.NewChallengeDesc(icb.Submission)
+	returnChannel := icb.State
+	teamID := icb.Team.ID
+
+	slackActionCtx := newSlackActionContext(challenge, teamID, env)
+
+	go slackActionCtx.createChallenge(challengeDesc, returnChannel)
+
+	return nil
+}
+
+func parseChallengeStart(readCloser io.ReadCloser, verificationToken string) (slackApi.InteractionCallback, error) {
+	payload, err := payloadContents(readCloser)
+	if err != nil {
+		return slackApi.InteractionCallback{}, err
+	}
+
+	var icb slackApi.InteractionCallback
+	err = json.Unmarshal([]byte(payload), &icb)
+	if err != nil {
+		log.Println("[ERROR] Unable to unmarshall json response", err)
+		return slackApi.InteractionCallback{}, err
+	}
+
+	if icb.Token != verificationToken {
+		log.Println("[ERROR] Unable to validate request ", err)
+		return slackApi.InteractionCallback{}, ValidationError{}
+	}
+
+	return icb, nil
+}
+
+func payloadContents(readCloser io.ReadCloser) (string, error) {
+	buf := new(bytes.Buffer)
+	_, err := buf.ReadFrom(readCloser)
+	if err != nil {
+		log.Println("[ERROR] Unable to read the response body ", err)
+		return "", err
+	}
+
+	response := buf.String()
+	payload := strings.TrimLeft(response, "payload=")
+	unescapedPayload, err := url.QueryUnescape(payload)
+	if err != nil {
+		log.Println("[ERROR] Unable to unescape the response body ", err)
+		return "", err
+	}
+
+	return unescapedPayload, nil
+}
 
 func newChallengeOptionsDialog(triggerID string, channelID string, options []string) *slackApi.Dialog {
 	candidateNameElement := slackApi.NewTextInput("candidate_name", "Candidate Name", "")

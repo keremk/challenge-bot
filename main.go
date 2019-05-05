@@ -1,9 +1,7 @@
 package main
 
-import (
-	"github.com/keremk/challenge-bot/slack"
-)
+import "github.com/keremk/challenge-bot/controllers"
 
 func main() {
-	slack.SetupSlackListeners()
+	controllers.SetupSlackListeners()
 }

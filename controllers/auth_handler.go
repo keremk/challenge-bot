@@ -1,4 +1,4 @@
-package slack
+package controllers
 
 import (
 	"bytes"
@@ -119,23 +119,23 @@ func (handler authHandler) readAndParse(resp *http.Response) (authResponse, erro
 
 func (handler authHandler) saveToDB(resp authResponse) error {
 	slackUser := &models.SlackUser{
-		SlackID:    resp.UserID,
-		SlackToken: resp.AccessToken,
+		ID:    resp.UserID,
+		Token: resp.AccessToken,
 	}
 	slackTeam := &models.SlackTeam{
-		SlackBotToken:  resp.Bot.BotAccessToken,
-		SlackBotUserID: resp.Bot.BotUserID,
-		SlackID:        resp.TeamID,
-		Name:           resp.TeamName,
+		BotToken:  resp.Bot.BotAccessToken,
+		BotUserID: resp.Bot.BotUserID,
+		ID:        resp.TeamID,
+		Name:      resp.TeamName,
 	}
 
 	usersDb := db.NewStore(*handler.env, db.SlackUsersCollection)
-	err := usersDb.Update(slackUser.SlackID, slackUser)
+	err := usersDb.Update(slackUser.ID, slackUser)
 	if err != nil {
 		return err
 	}
 
 	teamsDb := db.NewStore(*handler.env, db.SlackTeamsCollection)
-	err = teamsDb.Update(slackTeam.SlackID, slackTeam)
+	err = teamsDb.Update(slackTeam.ID, slackTeam)
 	return err
 }

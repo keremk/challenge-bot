@@ -9,6 +9,7 @@ const SlackTeamsCollection = "slackteams"
 
 type CrudOps interface {
 	Update(key string, obj interface{}) error
+	FindByID(id string, obj interface{}) error
 }
 
 func NewStore(env config.Environment, collection string) CrudOps {
