@@ -7,6 +7,7 @@ import (
 
 	"github.com/keremk/challenge-bot/config"
 	"github.com/keremk/challenge-bot/db"
+	"github.com/keremk/challenge-bot/util"
 )
 
 type Challenge struct {
@@ -16,6 +17,17 @@ type Challenge struct {
 	GithubOrg       string
 	TemplateRepo    string
 	CreatedByTeamID string
+}
+
+func NewChallenge(input map[string]string) Challenge {
+	return Challenge{
+		ID:              util.RandomString(16),
+		Name:            input["challenge_name"],
+		GithubOwner:     input["github_owner"],
+		GithubOrg:       input["github_org"],
+		TemplateRepo:    input["template_repo"],
+		CreatedByTeamID: input["team_id"],
+	}
 }
 
 func GetChallenge(env config.Environment, name string) (Challenge, error) {
@@ -42,6 +54,15 @@ func GetAllChallenges(env config.Environment) ([]Challenge, error) {
 		return nil, errors.New("[ERROR] Cannot convert")
 	}
 	return all, err
+}
+
+func UpdateChallenge(env config.Environment, challenge Challenge) error {
+	store, err := db.NewStore(env, db.SettingsCollection)
+	if err != nil {
+		return err
+	}
+
+	return store.Update(challenge.ID, challenge)
 }
 
 func (s Challenge) OrgOrOwner() string {

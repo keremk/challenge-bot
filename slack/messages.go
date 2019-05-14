@@ -2,6 +2,10 @@ package slack
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"strings"
+	"time"
 
 	"github.com/keremk/challenge-bot/models"
 	"github.com/nlopes/slack"
@@ -34,4 +38,18 @@ func newChallengeSummary(candidate models.Candidate, challengeURL string, tracki
 		fieldsSection,
 		footerSection,
 	)
+}
+
+func sendDelayedResponse(url string, json string) error {
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
+
+	body := strings.NewReader(json)
+	_, err := client.Post(url, "application/json", body)
+	if err != nil {
+		log.Println("[ERROR] Failed to send delayed response")
+		return err
+	}
+	return nil
 }
