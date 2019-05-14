@@ -13,19 +13,19 @@ import (
 
 type slackActionContext struct {
 	env     config.Environment
-	repoCtx *repo.ActionContext
+	repoCtx repo.ActionContext
 	teamID  string
 }
 
-func newSlackActionContext(challengeConfig *config.ChallengeConfig, teamID string, env config.Environment) *slackActionContext {
-	return &slackActionContext{
+func newSlackActionContext(teamID string, env config.Environment) slackActionContext {
+	return slackActionContext{
 		env:     env,
-		repoCtx: repo.NewActionContext(challengeConfig),
+		repoCtx: repo.NewActionContext(env),
 		teamID:  teamID,
 	}
 }
 
-func (s slackActionContext) createChallenge(challengeDesc models.ChallengeDesc, targetChannel string) {
+func (s slackActionContext) createChallenge(challenge models.Challenge, candidate models.Candidate, targetChannel string) {
 	token, err := getBotToken(s.env, s.teamID)
 	if err != nil {
 		return
@@ -33,21 +33,21 @@ func (s slackActionContext) createChallenge(challengeDesc models.ChallengeDesc, 
 
 	slackClient := slackApi.New(token)
 
-	if s.repoCtx.CheckUser(challengeDesc.GithubAlias) == false {
-		errorMsg := fmt.Sprintf("Github Alias %s for candidate %s is not correct", challengeDesc.GithubAlias, challengeDesc.CandidateName)
+	if s.repoCtx.CheckUser(candidate.GithubAlias) == false {
+		errorMsg := fmt.Sprintf("Github Alias %s for candidate %s is not correct", candidate.GithubAlias, candidate.Name)
 		slackClient.PostMessage(targetChannel, slack.MsgOptionText(errorMsg, false))
 		return
 	}
 
 	slackClient.PostMessage(targetChannel, slack.MsgOptionText("Please be patient, while I go create a coding challenge for you...", false))
 
-	challengeURL, err := s.repoCtx.CreateChallenge(challengeDesc)
+	challengeURL, err := s.repoCtx.CreateChallenge(candidate, challenge)
 
 	if err != nil {
 		log.Println("[ERROR] Create challenge failed: ", err)
-		errorMsg := fmt.Sprintf("Unable to create challenge for %s", challengeDesc.CandidateName)
+		errorMsg := fmt.Sprintf("Unable to create challenge for %s", candidate.Name)
 		slackClient.PostMessage(targetChannel, slack.MsgOptionText(errorMsg, false))
 		return
 	}
-	slackClient.PostMessage(targetChannel, newChallengeSummary(challengeDesc, challengeURL))
+	slackClient.PostMessage(targetChannel, newChallengeSummary(candidate, challengeURL, challenge.TrackingIssuesURL()))
 }

@@ -10,12 +10,11 @@ import (
 )
 
 type dialogHandler struct {
-	env             config.Environment
-	challengeConfig *config.ChallengeConfig
+	env config.Environment
 }
 
 func (h *dialogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	err := slack.HandleDialogResponse(h.env, r.Body, h.challengeConfig)
+	err := slack.HandleDialogResponse(h.env, r.Body)
 
 	if err != nil {
 		switch err.(type) {

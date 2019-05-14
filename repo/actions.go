@@ -32,74 +32,61 @@ type repoOps interface {
 }
 
 type ActionContext struct {
-	ChallengeConfig *config.ChallengeConfig
-	RepoOps         repoOps
+	ops githubOps
 }
 
 const challengeRepoFormat = "test_%s_%s"
 const starterTaskNo = 0
 
-func NewActionContext(challengeConfig *config.ChallengeConfig) *ActionContext {
-	ops := &githubOps{
-		token: challengeConfig.GithubToken,
+func NewActionContext(env config.Environment) ActionContext {
+	ops := githubOps{
+		token: env.GithubToken,
 	}
-	return &ActionContext{
-		ChallengeConfig: challengeConfig,
-		RepoOps:         ops,
+	return ActionContext{
+		ops: ops,
 	}
 }
 
 func (ctx ActionContext) CheckUser(githubAlias string) bool {
-	return ctx.RepoOps.checkUser(githubAlias)
+	return ctx.ops.checkUser(githubAlias)
 }
 
 // Creates a coding challenge for a given candidate and challenge type.
 // The coding challenge is created based on the configuration settings the .challenge.yaml file
-func (ctx ActionContext) CreateChallenge(challengeDesc models.ChallengeDesc) (string, error) {
-	repoName := fmt.Sprintf(challengeRepoFormat, challengeDesc.GithubAlias, challengeDesc.ChallengeTemplate)
-	challengeRepoURL, err := ctx.createStarterRepo(repoName, challengeDesc.ChallengeTemplate)
+func (ctx ActionContext) CreateChallenge(candidate models.Candidate, challenge models.Challenge) (string, error) {
+	repoName := fmt.Sprintf(challengeRepoFormat, challenge.Name, candidate.GithubAlias)
+	challengeRepoURL, err := ctx.createStarterRepo(repoName, challenge)
 	if err != nil {
-		log.Println("[ERROR] Cannot create starter repo for candidate ", challengeDesc.GithubAlias)
+		log.Println("[ERROR] Cannot create starter repo for candidate ", candidate.GithubAlias)
 		return "", err
 	}
 
-	err = ctx.createCandidateTask(repoName, challengeDesc.ChallengeTemplate, starterTaskNo)
+	err = ctx.createTrackingIssue(candidate, challengeRepoURL, challenge)
 	if err != nil {
-		log.Println("[ERROR] Can not create candidate task for ", challengeDesc.GithubAlias)
+		log.Println("[ERROR] Could not create tracking issue for ", candidate.GithubAlias)
 		return challengeRepoURL, err
 	}
 
-	err = ctx.createTrackingIssue(challengeDesc, challengeRepoURL)
+	err = ctx.addCollaborator(candidate.GithubAlias, repoName, challenge.OrgOrOwner())
 	if err != nil {
-		log.Println("[ERROR] Could not create tracking issue for ", challengeDesc.GithubAlias)
-		return challengeRepoURL, err
-	}
-
-	err = ctx.addCollaborator(challengeDesc.GithubAlias, repoName)
-	if err != nil {
-		log.Println("[ERROR] Cannot add the candidate as a collaborator ", challengeDesc.GithubAlias)
+		log.Println("[ERROR] Cannot add the candidate as a collaborator ", candidate.GithubAlias)
 		return challengeRepoURL, err
 	}
 
 	return challengeRepoURL, nil
 }
 
-func (ctx ActionContext) createStarterRepo(repoName string, discipline string) (string, error) {
-	templateRepoURL, err := ctx.ChallengeConfig.TemplateRepositoryURL(discipline)
-	if err != nil {
-		log.Println("[ERROR] Cannot find template repository url for ", discipline)
-		return "", err
-	}
+func (ctx ActionContext) createStarterRepo(repoName string, challenge models.Challenge) (string, error) {
+	templateRepoURL := challenge.TemplateRepositoryURL()
+	organization := challenge.GithubOrg
 
-	organization := ctx.ChallengeConfig.Organization
-
-	challengeRepoURL, err := ctx.RepoOps.createRepository(repoName, organization)
+	challengeRepoURL, err := ctx.ops.createRepository(repoName, organization)
 	if err != nil {
 		log.Println("[ERROR] Cannot create a new repository, ", err)
 		return "", err
 	}
 
-	err = ctx.RepoOps.pushStarterRepo(templateRepoURL, challengeRepoURL)
+	err = ctx.ops.pushStarterRepo(templateRepoURL, challengeRepoURL)
 	if err != nil {
 		log.Println("[ERROR] Could not push the starter repository, ", err)
 		return challengeRepoURL, err
@@ -108,45 +95,23 @@ func (ctx ActionContext) createStarterRepo(repoName string, discipline string) (
 	return challengeRepoURL, nil
 }
 
-func (ctx ActionContext) createCandidateTask(repoName string, discipline string, level int) error {
-	description, title, err := ctx.ChallengeConfig.LoadTask(discipline, level)
-	if err != nil {
-		return err
-	}
-
-	issue := Issue{
-		Title:       title,
-		Discipline:  discipline,
-		Description: description,
-	}
-
-	accountName := ctx.ChallengeConfig.AccountName()
-
-	err = ctx.RepoOps.createIssue(issue, accountName, repoName)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (ctx ActionContext) createTrackingIssue(challengeDesc models.ChallengeDesc, challengeRepoURL string) error {
-	title := "Coding Challenge for: " + challengeDesc.CandidateName
+func (ctx ActionContext) createTrackingIssue(candidate models.Candidate, challengeRepoURL string, challenge models.Challenge) error {
+	title := "Coding Challenge for: " + candidate.Name
 	descriptionFormat := `
 Github Alias: %s
 Coding Challenge Link: %s
 Resume Link: %s
 `
 
-	description := fmt.Sprintf(descriptionFormat, challengeDesc.GithubAlias, challengeRepoURL, challengeDesc.ResumeURL)
+	description := fmt.Sprintf(descriptionFormat, candidate.GithubAlias, challengeRepoURL, candidate.ResumeURL)
 	issue := Issue{
 		Title:       title,
-		Discipline:  challengeDesc.ChallengeTemplate,
+		Discipline:  challenge.Name,
 		Description: description,
 	}
-	trackingRepoName := ctx.ChallengeConfig.TrackingRepoName
-	accountName := ctx.ChallengeConfig.AccountName()
+	trackingRepoName := challenge.TemplateRepo
 
-	err := ctx.RepoOps.createIssue(issue, accountName, trackingRepoName)
+	err := ctx.ops.createIssue(issue, challenge.OrgOrOwner(), trackingRepoName)
 	if err != nil {
 		log.Println("[ERROR] Could not create a tracking issue at ", trackingRepoName)
 		return err
@@ -154,7 +119,6 @@ Resume Link: %s
 	return nil
 }
 
-func (ctx ActionContext) addCollaborator(githubName string, repoName string) error {
-	accountName := ctx.ChallengeConfig.AccountName()
-	return ctx.RepoOps.addCollaborator(githubName, accountName, repoName)
+func (ctx ActionContext) addCollaborator(githubAlias string, repoName string, orgOrOwner string) error {
+	return ctx.ops.addCollaborator(githubAlias, orgOrOwner, repoName)
 }

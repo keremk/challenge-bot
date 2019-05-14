@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/keremk/challenge-bot/db"
 	"github.com/keremk/challenge-bot/models"
 
 	"github.com/keremk/challenge-bot/config"
@@ -118,24 +117,20 @@ func (handler authHandler) readAndParse(resp *http.Response) (authResponse, erro
 }
 
 func (handler authHandler) saveToDB(resp authResponse) error {
-	slackUser := &models.SlackUser{
+	slackUser := models.SlackUser{
 		ID:    resp.UserID,
 		Token: resp.AccessToken,
 	}
-	slackTeam := &models.SlackTeam{
+	err := models.UpdateSlackUser(*handler.env, slackUser)
+	if err != nil {
+		return err
+	}
+
+	slackTeam := models.SlackTeam{
 		BotToken:  resp.Bot.BotAccessToken,
 		BotUserID: resp.Bot.BotUserID,
 		ID:        resp.TeamID,
 		Name:      resp.TeamName,
 	}
-
-	usersDb := db.NewStore(*handler.env, db.SlackUsersCollection)
-	err := usersDb.Update(slackUser.ID, slackUser)
-	if err != nil {
-		return err
-	}
-
-	teamsDb := db.NewStore(*handler.env, db.SlackTeamsCollection)
-	err = teamsDb.Update(slackTeam.ID, slackTeam)
-	return err
+	return models.UpdateSlackTeam(*handler.env, slackTeam)
 }

@@ -7,8 +7,8 @@ import (
 )
 
 type Environment struct {
-	Port               string `envconfig:"PORT" default:"4390"`
-	BotToken           string `envconfig:"BOT_TOKEN" required:"true"`
+	Port string `envconfig:"PORT" default:"4390"`
+	// BotToken           string `envconfig:"BOT_TOKEN" required:"true"`
 	VerificationToken  string `envconfig:"VERIFICATION_TOKEN" required:"true"`
 	GithubToken        string `envconfig:"GITHUB_TOKEN" required:"true"`
 	GithubOwner        string `envconfig:"GITHUB_OWNER" required:"true"`
@@ -54,8 +54,8 @@ func getProductionEnv() *Environment {
 
 func getUnitTestEnv() *Environment {
 	return &Environment{
-		Port:               "4390",
-		BotToken:           "FakeToken",
+		Port: "4390",
+		// BotToken:           "FakeToken",
 		VerificationToken:  "FakeToken",
 		GithubToken:        "FakeToken",
 		GithubOwner:        "Owner",

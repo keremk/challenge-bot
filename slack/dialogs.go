@@ -3,6 +3,8 @@ package slack
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/url"
@@ -13,19 +15,47 @@ import (
 	slackApi "github.com/nlopes/slack"
 )
 
-func HandleDialogResponse(env config.Environment, readCloser io.ReadCloser, challenge *config.ChallengeConfig) error {
+type dialogState struct {
+	channelID    string
+	settingsName string
+}
+
+func stateFromString(s string) (dialogState, error) {
+	x := strings.Split(s, ",")
+	if len(x) < 2 {
+		return dialogState{}, errors.New("[ERROR] state persisted incorrectly")
+	}
+
+	return dialogState{
+		channelID:    x[0],
+		settingsName: x[1],
+	}, nil
+}
+
+func (d dialogState) string() string {
+	return fmt.Sprintf("%s,%s", d.channelID, d.settingsName)
+}
+
+func HandleDialogResponse(env config.Environment, readCloser io.ReadCloser) error {
 	icb, err := parseChallengeStart(readCloser, env.VerificationToken)
 	if err != nil {
 		return err
 	}
 
-	challengeDesc := models.NewChallengeDesc(icb.Submission)
-	returnChannel := icb.State
+	candidate := models.NewCandidate(icb.Submission)
+	state, err := stateFromString(icb.State)
+	if err != nil {
+		return err
+	}
+	returnChannel := state.channelID
 	teamID := icb.Team.ID
 
-	slackActionCtx := newSlackActionContext(challenge, teamID, env)
-
-	go slackActionCtx.createChallenge(challengeDesc, returnChannel)
+	challenge, err := models.GetChallenge(env, candidate.ChallengeName)
+	if err != nil {
+		return err
+	}
+	slackActionCtx := newSlackActionContext(teamID, env)
+	go slackActionCtx.createChallenge(challenge, candidate, returnChannel)
 
 	return nil
 }
@@ -68,35 +98,4 @@ func payloadContents(readCloser io.ReadCloser) (string, error) {
 	}
 
 	return unescapedPayload, nil
-}
-
-func newChallengeOptionsDialog(triggerID string, channelID string, options []string) *slackApi.Dialog {
-	candidateNameElement := slackApi.NewTextInput("candidate_name", "Candidate Name", "")
-	githubNameElement := slackApi.NewTextInput("github_alias", "Github Alias", "")
-	resumeURLElement := slackApi.NewTextInput("resume_URL", "Resume URL", "")
-	selectOptions := make([]slackApi.DialogSelectOption, len(options))
-	for i, v := range options {
-		selectOptions[i] = slackApi.DialogSelectOption{
-			Label: v,
-			Value: v,
-		}
-	}
-	disciplineSelectElement := slackApi.NewStaticSelectDialogInput("challenge_template", "Challenge Template", selectOptions)
-
-	elements := []slackApi.DialogElement{
-		candidateNameElement,
-		githubNameElement,
-		resumeURLElement,
-		disciplineSelectElement,
-	}
-
-	return &slackApi.Dialog{
-		TriggerID:      triggerID,
-		CallbackID:     "challenge_67e2d0",
-		Title:          "Create Coding Challenge",
-		SubmitLabel:    "Create",
-		NotifyOnCancel: false,
-		State:          channelID,
-		Elements:       elements,
-	}
 }

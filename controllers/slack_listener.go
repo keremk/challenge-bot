@@ -11,17 +11,12 @@ import (
 
 func SetupSlackListeners() {
 	env := config.NewEnvironment("production")
-	challengeConfig, err := config.NewChallengeConfig(env, config.NewGithubChallengeReader())
-	if err != nil {
-		log.Fatalln("[ERROR] Configuration cannot be retrieved ", err)
-	}
 
 	http.Handle("/commands", &CommandHandler{
 		env: *env,
 	})
 	http.Handle("/requests", &dialogHandler{
-		challengeConfig: challengeConfig,
-		env:             *env,
+		env: *env,
 	})
 	http.Handle("/auth/", http.StripPrefix("/auth/", http.FileServer(http.Dir("./static"))))
 	http.Handle("/auth/redirect", &authHandler{
