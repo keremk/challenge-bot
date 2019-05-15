@@ -23,6 +23,11 @@ func SetupSlackListeners() {
 		env: env,
 	})
 
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		log.Println("[INFO] Health ok")
+		w.WriteHeader(http.StatusOK)
+	})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

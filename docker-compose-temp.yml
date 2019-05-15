@@ -1,0 +1,16 @@
+version: '3'
+services: 
+  challenge:
+    image: "challenge:latest"
+    ports: 
+      - "4390:4390"
+    environment:
+      - VERIFICATION_TOKEN={{index .Vars "VERIFICATION_TOKEN"}}
+      - PORT=4390
+      - GITHUB_TOKEN={{index .Vars "GITHUB_TOKEN"}}
+      - GOOGLE_APPLICATION_CREDENTIALS=/challenge-db-key.json
+      - SLACK_CLIENT_ID={{index .Vars "SLACK_CLIENT_ID"}}
+      - SLACK_CLIENT_SECRET={{index .Vars "SLACK_CLIENT_SECRET"}}
+      - SLACK_REDIRECT_URI=https://0c4fece0.ngrok.io/auth/redirect
+      - GCLOUD_PROJECT_ID=coding-challenge-bot
+      - DB_PROVIDER=Firestore

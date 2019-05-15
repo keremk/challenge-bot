@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/keremk/challenge-bot/config"
@@ -26,6 +27,7 @@ func NewStore(env config.Environment, collection string) (CrudOps, error) {
 			collection: collection,
 		}, nil
 	default:
-		return nil, errors.New("[ERROR] db provider not known or unspecified")
+		errMsg := fmt.Sprintf("[ERROR] db provider not known or unspecified - %s", env.DbProvider)
+		return nil, errors.New(errMsg)
 	}
 }
