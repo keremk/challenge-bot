@@ -25,7 +25,7 @@ func (s FirestoreDb) Update(key string, obj interface{}) error {
 
 	_, err = client.Collection(s.collection).Doc(key).Set(ctx, obj)
 	if err != nil {
-		log.Println("[ERROR] cannot write data to Firestore", err)
+		log.Println("[ERROR] cannot write data to Firestore for key=", key, err)
 	}
 	return err
 }
@@ -39,7 +39,7 @@ func (s FirestoreDb) FindByID(id string, obj interface{}) error {
 
 	data, err := client.Collection(s.collection).Doc(id).Get(ctx)
 	if err != nil {
-		log.Println("[ERROR] cannot find object", err)
+		log.Println("[ERROR] cannot find object with id=", id, err)
 		return err
 	}
 	return data.DataTo(obj)
@@ -75,7 +75,7 @@ func (s FirestoreDb) FindAll(itemType reflect.Type) (interface{}, error) {
 	if err != nil || (len(docs) < 1) {
 		log.Println("[ERROR] cannot find object", err)
 		return nil, err
-		
+
 	}
 
 	slice := reflect.MakeSlice(itemType, 0, 100)

@@ -73,6 +73,7 @@ func (ctx ActionContext) CreateChallenge(candidate models.Candidate, challenge m
 		return challengeRepoURL, err
 	}
 
+	log.Println("[INFO] Challenge repo is successfully created and user added.")
 	return challengeRepoURL, nil
 }
 

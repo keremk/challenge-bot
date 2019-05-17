@@ -3,7 +3,7 @@ package controllers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"log"
 	"net/http"
 	"net/url"
@@ -35,6 +35,8 @@ type botInfo struct {
 }
 
 type authResponse struct {
+	Ok          bool    `json:"Ok"`
+	Error       string  `json:"error"`
 	AccessToken string  `json:"access_token"`
 	Scope       string  `json:"scope"`
 	UserID      string  `json:"user_id"`
@@ -49,6 +51,12 @@ type authHandler struct {
 
 func (handler authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	slackCode := r.URL.Query().Get("code")
+	if slackCode == "" {
+		log.Println("[ERROR] No code received from slack")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	resp, err := handler.callbackSlack(slackCode)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -61,7 +69,9 @@ func (handler authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(authResponse)
+	log.Println("[INFO] User ID: ", authResponse.UserID)
+	log.Println("[INFO] Team ID: ", authResponse.TeamID)
+	log.Println("[INFO] Team Name: ", authResponse.TeamName)
 
 	err = handler.saveToDB(authResponse)
 	if err != nil {
@@ -77,19 +87,24 @@ func (handler authHandler) callbackSlack(slackCode string) (*http.Response, erro
 		Timeout: time.Second * 10,
 	}
 
-	url, err := url.Parse("https://slack.com/api/oauth.access?")
+	uri, err := url.Parse("https://slack.com/api/oauth.access?")
 	if err != nil {
 		log.Fatal("[ERROR] Unexpected error in parsing hard coded URL?!?", err)
 	}
-	query := url.Query()
-	query.Set("code", slackCode)
-	query.Set("client_id", handler.env.SlackClientID)
-	query.Set("client_secret", handler.env.SlackClientSecret)
+	query := uri.Query()
+	query.Set("code", url.QueryEscape(slackCode))
+	query.Set("client_id", url.QueryEscape(handler.env.SlackClientID))
+	query.Set("client_secret", url.QueryEscape(handler.env.SlackClientSecret))
 	query.Set("redirect_uri", handler.env.SlackRedirectURI)
 
-	url.RawQuery = query.Encode()
+	log.Println("[INFO] Redirect URI is: ", handler.env.SlackRedirectURI)
 
-	resp, err := client.Get(url.String())
+	uri.RawQuery = query.Encode()
+	uriString := uri.String()
+
+	// IMPORTANT: If you log this, regenerate the Client Secret after diagnosing and comment it out again.
+	// log.Println("[INFO] The request we are sending to Slack: ", uriString)
+	resp, err := client.Get(uriString)
 	if err != nil {
 		log.Println("[ERROR] Cannot reach Slack for OAuth - ", err)
 	}
@@ -104,13 +119,16 @@ func (handler authHandler) readAndParse(resp *http.Response) (authResponse, erro
 		return authResponse{}, err
 	}
 
-	log.Println(buf.String())
-
 	var response authResponse
 	err = json.Unmarshal(buf.Bytes(), &response)
 	if err != nil {
 		log.Println("[ERROR] Cannot parse the json - ", err)
 		return authResponse{}, err
+	}
+
+	if response.Ok == false {
+		log.Println("[ERROR] Did not get expected auth response - ", buf.String())
+		return authResponse{}, errors.New("[ERROR] Did not get expected auth response")
 	}
 
 	return response, nil

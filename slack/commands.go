@@ -185,8 +185,6 @@ func executeNewChallenge(env config.Environment, c command) error {
 		log.Println("[ERROR] Cannot create the dialog ", err)
 	}
 	return err
-
-	return nil
 }
 
 func challengeNames(env config.Environment) ([]string, error) {
