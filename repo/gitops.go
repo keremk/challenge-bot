@@ -16,7 +16,6 @@ package repo
 
 import (
 	"log"
-	"os"
 
 	git "gopkg.in/src-d/go-git.v4"
 	gitConfig "gopkg.in/src-d/go-git.v4/config"
@@ -44,8 +43,8 @@ func (ctx gitOps) cloneRepository(repoURL string) (*git.Repository, error) {
 			Username: "abc123", // yes, this can be anything except an empty string
 			Password: ctx.token,
 		},
-		URL:      repoURL,
-		Progress: os.Stdout,
+		URL: repoURL,
+		// Progress: os.Stdout,
 	})
 
 	return repository, err
@@ -68,6 +67,6 @@ func (ctx gitOps) createAndPushToRemote(remoteRepoURL string, repository *git.Re
 			Username: "abc123", // yes, this can be anything except an empty string
 			Password: ctx.token,
 		},
-		Progress: os.Stdout,
+		// Progress: os.Stdout,
 	})
 }
