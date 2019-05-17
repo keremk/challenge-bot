@@ -57,7 +57,6 @@ func (ctx ActionContext) CreateChallenge(candidate models.Candidate, challenge m
 	repoName := fmt.Sprintf(challengeRepoFormat, challenge.Name, candidate.GithubAlias)
 	challengeRepoURL, err := ctx.createStarterRepo(repoName, challenge)
 	if err != nil {
-		log.Println("[ERROR] Cannot create starter repo for candidate ", candidate.GithubAlias)
 		return "", err
 	}
 

@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/keremk/challenge-bot/config"
@@ -16,6 +17,8 @@ import (
 	"github.com/nlopes/slack"
 	slackApi "github.com/nlopes/slack"
 )
+
+const dreadedPrivateRepoError = "422 Visibility can't be private"
 
 type dialogState struct {
 	channelID    string
@@ -69,7 +72,6 @@ func handleSendChallenge(env config.Environment, icb slack.InteractionCallback) 
 	if err != nil {
 		return err
 	}
-	// slackActionCtx := newSlackActionContext(teamID, env)
 	go sendChallenge(env, challenge, candidate, returnChannel, teamID)
 
 	return nil
@@ -89,8 +91,13 @@ func sendChallenge(env config.Environment, challenge models.Challenge, candidate
 	challengeURL, err := repoCtx.CreateChallenge(candidate, challenge)
 
 	if err != nil {
-		log.Println("[ERROR] Create challenge failed: ", err)
-		errorMsg := fmt.Sprintf("Unable to create challenge for %s", candidate.Name)
+		re := regexp.MustCompile(dreadedPrivateRepoError)
+		var errorMsg string
+		if re.FindStringIndex(err.Error()) != nil {
+			errorMsg = fmt.Sprintf("Unable to create challenge. You need to cleanup private repositories, because you exceeded your allowed limit.")
+		} else {
+			errorMsg = fmt.Sprintf("Unable to create challenge for %s because of ", candidate.Name, err.Error())
+		}
 		postMessage(env, teamID, targetChannel, toMsgOption(errorMsg))
 		return
 	}
