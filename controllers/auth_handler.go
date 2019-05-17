@@ -79,7 +79,7 @@ func (handler authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusAccepted)
+	http.Redirect(w, r, "/auth/success.html", http.StatusFound)
 }
 
 func (handler authHandler) callbackSlack(slackCode string) (*http.Response, error) {

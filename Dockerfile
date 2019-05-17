@@ -22,7 +22,7 @@ RUN apk add --no-cache ca-certificates
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /go/src/github.com/keremk/challenge-bot/challenge /challenge
 COPY --from=builder /go/src/github.com/keremk/challenge-bot/challenge-db-key.json /challenge-db-key.json
-COPY --from=builder /go/src/github.com/keremk/challenge-bot/static/install.html /static/install.html
+COPY --from=builder /go/src/github.com/keremk/challenge-bot/static/. /static/.
 
 # Run the web service on container startup.
 CMD ["/challenge"]
