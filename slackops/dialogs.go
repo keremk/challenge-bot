@@ -1,4 +1,4 @@
-package slack
+package slackops
 
 import (
 	"bytes"
@@ -14,8 +14,8 @@ import (
 	"github.com/keremk/challenge-bot/config"
 	"github.com/keremk/challenge-bot/models"
 	"github.com/keremk/challenge-bot/repo"
+
 	"github.com/nlopes/slack"
-	slackApi "github.com/nlopes/slack"
 )
 
 const dreadedPrivateRepoError = "422 Visibility can't be private"
@@ -130,27 +130,27 @@ func postMessage(env config.Environment, teamID string, targetChannel string, ms
 		return err
 	}
 
-	slackClient := slackApi.New(token)
+	slackClient := slack.New(token)
 	slackClient.PostMessage(targetChannel, msgOption)
 	return nil
 }
 
-func parseChallengeStart(readCloser io.ReadCloser, verificationToken string) (slackApi.InteractionCallback, error) {
+func parseChallengeStart(readCloser io.ReadCloser, verificationToken string) (slack.InteractionCallback, error) {
 	payload, err := payloadContents(readCloser)
 	if err != nil {
-		return slackApi.InteractionCallback{}, err
+		return slack.InteractionCallback{}, err
 	}
 
-	var icb slackApi.InteractionCallback
+	var icb slack.InteractionCallback
 	err = json.Unmarshal([]byte(payload), &icb)
 	if err != nil {
 		log.Println("[ERROR] Unable to unmarshall json response", err)
-		return slackApi.InteractionCallback{}, err
+		return slack.InteractionCallback{}, err
 	}
 
 	if icb.Token != verificationToken {
 		log.Println("[ERROR] Unable to validate request ", err)
-		return slackApi.InteractionCallback{}, ValidationError{}
+		return slack.InteractionCallback{}, ValidationError{}
 	}
 
 	return icb, nil

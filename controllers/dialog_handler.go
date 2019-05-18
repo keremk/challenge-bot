@@ -4,8 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/keremk/challenge-bot/slack"
-
+	"github.com/keremk/challenge-bot/slackops"
 	"github.com/keremk/challenge-bot/config"
 )
 
@@ -14,11 +13,11 @@ type dialogHandler struct {
 }
 
 func (h *dialogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	err := slack.HandleDialogResponse(h.env, r.Body)
+	err := slackops.HandleDialogResponse(h.env, r.Body)
 
 	if err != nil {
 		switch err.(type) {
-		case slack.ValidationError:
+		case slackops.ValidationError:
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		default:

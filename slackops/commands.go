@@ -1,4 +1,4 @@
-package slack
+package slackops
 
 import (
 	"errors"
@@ -7,16 +7,15 @@ import (
 	"strings"
 
 	"github.com/keremk/challenge-bot/models"
-
 	"github.com/keremk/challenge-bot/config"
-	slackApi "github.com/nlopes/slack"
+	"github.com/nlopes/slack"
 )
 
 type command struct {
 	mainCommand  string
 	subCommand   string
 	arg          string
-	slashCommand *slackApi.SlashCommand
+	slashCommand *slack.SlashCommand
 }
 
 func ExecuteCommand(env config.Environment, request *http.Request) error {
@@ -52,8 +51,8 @@ func ExecuteCommand(env config.Environment, request *http.Request) error {
 	return nil
 }
 
-func parsePayload(request *http.Request, verificationToken string) (*slackApi.SlashCommand, error) {
-	s, err := slackApi.SlashCommandParse(request)
+func parsePayload(request *http.Request, verificationToken string) (*slack.SlashCommand, error) {
+	s, err := slack.SlashCommandParse(request)
 	if err != nil {
 		log.Println("[ERROR] Unable to parse command ", err)
 		return nil, err
@@ -66,7 +65,7 @@ func parsePayload(request *http.Request, verificationToken string) (*slackApi.Sl
 	return &s, nil
 }
 
-func parseSlashCommand(slashCommand *slackApi.SlashCommand) command {
+func parseSlashCommand(slashCommand *slack.SlashCommand) command {
 	helpCommand := command{
 		mainCommand:  slashCommand.Command,
 		subCommand:   "help",
@@ -156,7 +155,7 @@ func executeSendChallenge(env config.Environment, c command) error {
 	}
 	dialog := sendChallengeDialog(s.TriggerID, state, challengeList)
 
-	slackClient := slackApi.New(token)
+	slackClient := slack.New(token)
 	err = slackClient.OpenDialog(s.TriggerID, *dialog)
 	if err != nil {
 		log.Println("[ERROR] Cannot create the dialog ", err)
@@ -179,7 +178,7 @@ func executeNewChallenge(env config.Environment, c command) error {
 
 	dialog := newChallengeDialog(s.TriggerID, state)
 
-	slackClient := slackApi.New(token)
+	slackClient := slack.New(token)
 	err = slackClient.OpenDialog(s.TriggerID, *dialog)
 	if err != nil {
 		log.Println("[ERROR] Cannot create the dialog ", err)
@@ -199,27 +198,27 @@ func challengeNames(env config.Environment) ([]string, error) {
 	return names, nil
 }
 
-func sendChallengeDialog(triggerID string, state dialogState, options []string) *slackApi.Dialog {
-	candidateNameElement := slackApi.NewTextInput("candidate_name", "Candidate Name", "")
-	githubNameElement := slackApi.NewTextInput("github_alias", "Github Alias", "")
-	resumeURLElement := slackApi.NewTextInput("resume_URL", "Resume URL", "")
-	selectOptions := make([]slackApi.DialogSelectOption, len(options))
+func sendChallengeDialog(triggerID string, state dialogState, options []string) *slack.Dialog {
+	candidateNameElement := slack.NewTextInput("candidate_name", "Candidate Name", "")
+	githubNameElement := slack.NewTextInput("github_alias", "Github Alias", "")
+	resumeURLElement := slack.NewTextInput("resume_URL", "Resume URL", "")
+	selectOptions := make([]slack.DialogSelectOption, len(options))
 	for i, v := range options {
-		selectOptions[i] = slackApi.DialogSelectOption{
+		selectOptions[i] = slack.DialogSelectOption{
 			Label: v,
 			Value: v,
 		}
 	}
-	challengeNameElement := slackApi.NewStaticSelectDialogInput("challenge_name", "Challenge Name", selectOptions)
+	challengeNameElement := slack.NewStaticSelectDialogInput("challenge_name", "Challenge Name", selectOptions)
 
-	elements := []slackApi.DialogElement{
+	elements := []slack.DialogElement{
 		candidateNameElement,
 		githubNameElement,
 		resumeURLElement,
 		challengeNameElement,
 	}
 
-	return &slackApi.Dialog{
+	return &slack.Dialog{
 		TriggerID:      triggerID,
 		CallbackID:     "send_challenge",
 		Title:          "Send Coding Challenge",
@@ -230,18 +229,18 @@ func sendChallengeDialog(triggerID string, state dialogState, options []string) 
 	}
 }
 
-func newChallengeDialog(triggerID string, state dialogState) *slackApi.Dialog {
-	githubOrgElement := slackApi.NewTextInput("github_org", "Github Organization", "")
-	githubOwnerElement := slackApi.NewTextInput("github_owner", "Github Owner", "")
-	challengeNameElement := slackApi.NewTextInput("challenge_name", "Challenge Name", "")
-	templateRepoName := slackApi.NewTextInput("template_repo", "Template Repo Name", "")
-	elements := []slackApi.DialogElement{
+func newChallengeDialog(triggerID string, state dialogState) *slack.Dialog {
+	githubOrgElement := slack.NewTextInput("github_org", "Github Organization", "")
+	githubOwnerElement := slack.NewTextInput("github_owner", "Github Owner", "")
+	challengeNameElement := slack.NewTextInput("challenge_name", "Challenge Name", "")
+	templateRepoName := slack.NewTextInput("template_repo", "Template Repo Name", "")
+	elements := []slack.DialogElement{
 		githubOrgElement,
 		githubOwnerElement,
 		challengeNameElement,
 		templateRepoName,
 	}
-	return &slackApi.Dialog{
+	return &slack.Dialog{
 		TriggerID:      triggerID,
 		CallbackID:     "new_challenge",
 		Title:          "New Coding Challenge",

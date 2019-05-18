@@ -6,3 +6,4 @@ app.yaml
 playground.go
 vendor/
 docker-compose.yml
+challenge-bot

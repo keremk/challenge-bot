@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/keremk/challenge-bot/config"
-	"github.com/keremk/challenge-bot/slack"
+	"github.com/keremk/challenge-bot/slackops"
 )
 
 type CommandHandler struct {
@@ -12,10 +12,10 @@ type CommandHandler struct {
 }
 
 func (h CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	err := slack.ExecuteCommand(h.env, r)
+	err := slackops.ExecuteCommand(h.env, r)
 	if err != nil {
 		switch err.(type) {
-		case slack.ValidationError:
+		case slackops.ValidationError:
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		default:

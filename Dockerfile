@@ -5,14 +5,18 @@ FROM golang:1.12 as builder
 
 # Copy local code to the container image.
 WORKDIR /go/src/github.com/keremk/challenge-bot
+COPY go.mod .
+COPY go.sum .
+
+# Force the go compiler to use modules
+ENV GO111MODULE=on
+
+# Get dependencies - will be cached if we don't change mod/sum
+RUN go mod download
+# COPY the source code as the last step
 COPY . .
 
-# Build the command inside the container.
-# (You may fetch or manage dependencies here,
-# either manually or with a tool like "godep".)
-RUN go get -d -v ./...
-
-RUN CGO_ENABLED=0 GOOS=linux go build -v -o challenge
+RUN CGO_ENABLED=0 GOOS=linux go build -a -v -o challenge
 
 # Use a Docker multi-stage build to create a lean production image.
 # https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
