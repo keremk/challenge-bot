@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/keremk/challenge-bot/models"
 	"github.com/keremk/challenge-bot/config"
+	"github.com/keremk/challenge-bot/models"
 	"github.com/nlopes/slack"
 )
 
@@ -230,15 +230,18 @@ func sendChallengeDialog(triggerID string, state dialogState, options []string) 
 }
 
 func newChallengeDialog(triggerID string, state dialogState) *slack.Dialog {
-	githubOrgElement := slack.NewTextInput("github_org", "Github Organization", "")
-	githubOwnerElement := slack.NewTextInput("github_owner", "Github Owner", "")
-	challengeNameElement := slack.NewTextInput("challenge_name", "Challenge Name", "")
-	templateRepoName := slack.NewTextInput("template_repo", "Template Repo Name", "")
+	githubOrgEl := slack.NewTextInput("github_org", "Github Organization", "")
+	githubOwnerEl := slack.NewTextInput("github_owner", "Github Owner", "")
+	challengeNameEl := slack.NewTextInput("challenge_name", "Challenge Name", "")
+	templateRepoNameEl := slack.NewTextInput("template_repo", "Template Repo Name", "")
+	repoNameFormatEl := slack.NewTextInput("repo_name_format", "Repo Name Format", "test_CHALLENGENAME-GITHUBALIAS")
+
 	elements := []slack.DialogElement{
-		githubOrgElement,
-		githubOwnerElement,
-		challengeNameElement,
-		templateRepoName,
+		githubOrgEl,
+		githubOwnerEl,
+		challengeNameEl,
+		templateRepoNameEl,
+		repoNameFormatEl,
 	}
 	return &slack.Dialog{
 		TriggerID:      triggerID,

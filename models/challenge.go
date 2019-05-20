@@ -16,6 +16,7 @@ type Challenge struct {
 	GithubOwner     string
 	GithubOrg       string
 	TemplateRepo    string
+	RepoNameFormat  string
 	CreatedByTeamID string
 }
 
@@ -26,6 +27,7 @@ func NewChallenge(input map[string]string) Challenge {
 		GithubOwner:     input["github_owner"],
 		GithubOrg:       input["github_org"],
 		TemplateRepo:    input["template_repo"],
+		RepoNameFormat:  input["repo_name_format"],
 		CreatedByTeamID: input["team_id"],
 	}
 }

@@ -17,6 +17,7 @@ package repo
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/keremk/challenge-bot/models"
 
@@ -35,9 +36,6 @@ type ActionContext struct {
 	ops githubOps
 }
 
-const challengeRepoFormat = "test_%s_%s"
-const starterTaskNo = 0
-
 func NewActionContext(env config.Environment) ActionContext {
 	ops := githubOps{
 		token: env.GithubToken,
@@ -54,7 +52,7 @@ func (ctx ActionContext) CheckUser(githubAlias string) bool {
 // Creates a coding challenge for a given candidate and challenge type.
 // The coding challenge is created based on the configuration settings the .challenge.yaml file
 func (ctx ActionContext) CreateChallenge(candidate models.Candidate, challenge models.Challenge) (string, error) {
-	repoName := fmt.Sprintf(challengeRepoFormat, challenge.Name, candidate.GithubAlias)
+	repoName := challengeRepoName(challenge.RepoNameFormat, challenge.Name, candidate.GithubAlias)
 	challengeRepoURL, err := ctx.createStarterRepo(repoName, challenge)
 	if err != nil {
 		return "", err
@@ -121,4 +119,21 @@ Resume Link: %s
 
 func (ctx ActionContext) addCollaborator(githubAlias string, repoName string, orgOrOwner string) error {
 	return ctx.ops.addCollaborator(githubAlias, orgOrOwner, repoName)
+}
+
+const githubAliasMarker = "GITHUBALIAS"
+const challengeNameMarker = "CHALLENGENAME"
+const defaultTmpl = "test_CHALLENGENAME-GITHUBALIAS"
+
+func challengeRepoName(formatTmpl, challengeName, githubAlias string) string {
+	var tmpl string
+	if formatTmpl == "" {
+		tmpl = defaultTmpl
+	} else {
+		tmpl = formatTmpl
+	}
+
+	repoName := strings.Replace(tmpl, githubAliasMarker, githubAlias, -1)
+	repoName = strings.Replace(repoName, challengeNameMarker, challengeName, -1)
+	return repoName
 }
