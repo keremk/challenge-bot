@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 
 	"github.com/keremk/challenge-bot/config"
@@ -11,28 +10,31 @@ import (
 )
 
 type Challenge struct {
-	ID              string
-	Name            string
-	GithubOwner     string
-	GithubOrg       string
-	TemplateRepo    string
-	RepoNameFormat  string
-	CreatedByTeamID string
+	ID                string
+	Name              string
+	GithubOwner       string
+	GithubOrg         string
+	GithubAccountName string
+	GithubToken       string
+	TemplateRepo      string
+	RepoNameFormat    string
+	CreatedByTeamID   string
 }
 
 func NewChallenge(input map[string]string) Challenge {
 	return Challenge{
-		ID:              util.RandomString(16),
-		Name:            input["challenge_name"],
-		GithubOwner:     input["github_owner"],
-		GithubOrg:       input["github_org"],
-		TemplateRepo:    input["template_repo"],
-		RepoNameFormat:  input["repo_name_format"],
-		CreatedByTeamID: input["team_id"],
+		ID:   util.RandomString(16),
+		Name: input["challenge_name"],
+		// GithubOwner:       input["github_owner"],
+		// GithubOrg:         input["github_org"],
+		GithubAccountName: input["github_account"],
+		TemplateRepo:      input["template_repo"],
+		RepoNameFormat:    input["repo_name_format"],
+		CreatedByTeamID:   input["team_id"],
 	}
 }
 
-func GetChallenge(env config.Environment, name string) (Challenge, error) {
+func getChallenge(env config.Environment, name string) (Challenge, error) {
 	challenge := Challenge{}
 	store, err := db.NewStore(env, db.SettingsCollection)
 	if err != nil {
@@ -65,20 +67,4 @@ func UpdateChallenge(env config.Environment, challenge Challenge) error {
 	}
 
 	return store.Update(challenge.ID, challenge)
-}
-
-func (s Challenge) OrgOrOwner() string {
-	if s.GithubOrg != "" {
-		return s.GithubOrg
-	} else {
-		return s.GithubOwner
-	}
-}
-
-func (s Challenge) TemplateRepositoryURL() string {
-	return fmt.Sprintf("https://github.com/%v/%v.git", s.OrgOrOwner(), s.TemplateRepo)
-}
-
-func (s Challenge) TrackingIssuesURL() string {
-	return fmt.Sprintf("https://github.com/%v/%v/issues", s.OrgOrOwner(), s.TemplateRepo)
 }

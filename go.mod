@@ -2,6 +2,8 @@ module github.com/keremk/challenge-bot
 
 require (
 	cloud.google.com/go v0.39.0
+	github.com/bradleyfalzon/ghinstallation v0.1.2-0.20190416002053-6d29d274bccc
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect

@@ -36,10 +36,9 @@ type ActionContext struct {
 	ops githubOps
 }
 
-func NewActionContext(env config.Environment) ActionContext {
-	ops := githubOps{
-		token: env.GithubToken,
-	}
+func NewActionContext(env config.Environment, challenge models.ChallengeSetup) ActionContext {
+	ops, _ := newGithubOps(challenge.GithubToken, env.GithubPrivateKeyFilename)
+
 	return ActionContext{
 		ops: ops,
 	}
@@ -51,7 +50,7 @@ func (ctx ActionContext) CheckUser(githubAlias string) bool {
 
 // Creates a coding challenge for a given candidate and challenge type.
 // The coding challenge is created based on the configuration settings the .challenge.yaml file
-func (ctx ActionContext) CreateChallenge(candidate models.Candidate, challenge models.Challenge) (string, error) {
+func (ctx ActionContext) CreateChallenge(candidate models.Candidate, challenge models.ChallengeSetup) (string, error) {
 	repoName := challengeRepoName(challenge.RepoNameFormat, challenge.Name, candidate.GithubAlias)
 	challengeRepoURL, err := ctx.createStarterRepo(repoName, challenge)
 	if err != nil {
@@ -74,10 +73,11 @@ func (ctx ActionContext) CreateChallenge(candidate models.Candidate, challenge m
 	return challengeRepoURL, nil
 }
 
-func (ctx ActionContext) createStarterRepo(repoName string, challenge models.Challenge) (string, error) {
+func (ctx ActionContext) createStarterRepo(repoName string, challenge models.ChallengeSetup) (string, error) {
 	templateRepoURL := challenge.TemplateRepositoryURL()
 	organization := challenge.GithubOrg
 
+	log.Printf("[INFO] Repo name: %s, Organization name: %s", repoName, organization)
 	challengeRepoURL, err := ctx.ops.createRepository(repoName, organization)
 	if err != nil {
 		log.Println("[ERROR] Cannot create a new repository, ", err)
@@ -93,7 +93,7 @@ func (ctx ActionContext) createStarterRepo(repoName string, challenge models.Cha
 	return challengeRepoURL, nil
 }
 
-func (ctx ActionContext) createTrackingIssue(candidate models.Candidate, challengeRepoURL string, challenge models.Challenge) error {
+func (ctx ActionContext) createTrackingIssue(candidate models.Candidate, challengeRepoURL string, challenge models.ChallengeSetup) error {
 	title := "Coding Challenge for: " + candidate.Name
 	descriptionFormat := `
 Github Alias: %s

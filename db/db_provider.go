@@ -11,6 +11,7 @@ import (
 const SlackUsersCollection = "slackusers"
 const SlackTeamsCollection = "slackteams"
 const SettingsCollection = "challengesettings"
+const GithubAccountsCollection = "githubaccounts"
 
 type CrudOps interface {
 	Update(key string, obj interface{}) error

@@ -7,17 +7,22 @@ import (
 )
 
 type Environment struct {
-	Port              string `envconfig:"PORT" default:"4390"`
-	VerificationToken string `envconfig:"VERIFICATION_TOKEN" required:"true"`
-	GithubToken       string `envconfig:"GITHUB_TOKEN" required:"true"`
-	SlackClientID     string `envconfig:"SLACK_CLIENT_ID" required:"true"`
-	SlackClientSecret string `envconfig:"SLACK_CLIENT_SECRET" required:"true"`
-	SlackRedirectURI  string `envconfig:"SLACK_REDIRECT_URI" required:"true"`
-	GCloudProjectID   string `envconfig:"GCLOUD_PROJECT_ID" required:"true"`
-	DbProvider        string `envconfig:"DB_PROVIDER" required:"true"`
+	Port                     string `envconfig:"PORT" default:"4390"`
+	VerificationToken        string `envconfig:"VERIFICATION_TOKEN" required:"true"`
+	GithubToken              string `envconfig:"GITHUB_TOKEN" required:"true"`
+	SlackClientID            string `envconfig:"SLACK_CLIENT_ID" required:"true"`
+	SlackClientSecret        string `envconfig:"SLACK_CLIENT_SECRET" required:"true"`
+	SlackRedirectURI         string `envconfig:"SLACK_REDIRECT_URI" required:"true"`
+	GithubClientID           string `envconfig:"GITHUB_CLIENT_ID" required:"true"`
+	GithubClientSecret       string `envconfig:"GITHUB_CLIENT_SECRET" required:"true"`
+	GithubRedirectURI        string `envconfig:"GITHUB_REDIRECT_URI" required:"true"`
+	GithubPrivateKeyFilename string `envconfig:"GITHUB_PRIVATEKEYFILENAME" required:"true"`
+	GCloudProjectID          string `envconfig:"GCLOUD_PROJECT_ID" required:"true"`
+	DbProvider               string `envconfig:"DB_PROVIDER" required:"true"`
+	DebugOn                  bool   `envconfig:"DEBUG_ON" required:"true"`
 }
 
-func NewEnvironment(params ...string) *Environment {
+func NewEnvironment(params ...string) Environment {
 	if len(params) == 0 {
 		log.Println("[INFO] using production environment")
 		return getProductionEnv()
@@ -39,9 +44,9 @@ func NewEnvironment(params ...string) *Environment {
 	}
 }
 
-func getProductionEnv() *Environment {
-	env := &Environment{}
-	err := envconfig.Process("", env)
+func getProductionEnv() Environment {
+	env := Environment{}
+	err := envconfig.Process("", &env)
 	if err != nil {
 		log.Fatalln("[ERROR] Can not read environment variables ", err)
 	}
@@ -50,8 +55,8 @@ func getProductionEnv() *Environment {
 	return env
 }
 
-func getUnitTestEnv() *Environment {
-	return &Environment{
+func getUnitTestEnv() Environment {
+	return Environment{
 		Port:              "4390",
 		VerificationToken: "FakeToken",
 		GithubToken:       "FakeToken",
@@ -62,7 +67,7 @@ func getUnitTestEnv() *Environment {
 	}
 }
 
-func getIntegrationTestEnv() *Environment {
+func getIntegrationTestEnv() Environment {
 	env := getProductionEnv()
 	return env
 }

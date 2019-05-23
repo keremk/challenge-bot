@@ -68,7 +68,7 @@ func handleSendChallenge(env config.Environment, icb slack.InteractionCallback) 
 	returnChannel := state.channelID
 	teamID := icb.Team.ID
 
-	challenge, err := models.GetChallenge(env, candidate.ChallengeName)
+	challenge, err := models.GetChallengeSetup(env, candidate.ChallengeName)
 	if err != nil {
 		return err
 	}
@@ -77,8 +77,8 @@ func handleSendChallenge(env config.Environment, icb slack.InteractionCallback) 
 	return nil
 }
 
-func sendChallenge(env config.Environment, challenge models.Challenge, candidate models.Candidate, targetChannel, teamID string) {
-	repoCtx := repo.NewActionContext(env)
+func sendChallenge(env config.Environment, challenge models.ChallengeSetup, candidate models.Candidate, targetChannel, teamID string) {
+	repoCtx := repo.NewActionContext(env, challenge)
 
 	if repoCtx.CheckUser(candidate.GithubAlias) == false {
 		errorMsg := fmt.Sprintf("Github Alias %s for candidate %s is not correct", candidate.GithubAlias, candidate.Name)
@@ -115,7 +115,13 @@ func handleNewChallenge(env config.Environment, icb slack.InteractionCallback) e
 		return err
 	}
 
-	msgText := fmt.Sprintf("We created a challenge named %s in our database. It is pointing to: %s", challenge.Name, challenge.TemplateRepositoryURL())
+	challengeSetup, err := models.GetChallengeSetup(env, challenge.Name)
+	if err != nil {
+		log.Println("[ERROR] Could not create a valid challenge setup, perhaps the github repo name is not valid ", err)
+		_ = postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption("We were not able to create a valid challenge"))
+		return err
+	}
+	msgText := fmt.Sprintf("We created a challenge named %s in our database. It is pointing to: %s", challengeSetup.Name, challengeSetup.TemplateRepositoryURL())
 	_ = postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption(msgText))
 	return nil
 }

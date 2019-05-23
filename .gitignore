@@ -7,3 +7,4 @@ playground.go
 vendor/
 docker-compose.yml
 challenge-bot
+codechallengeapp.pem

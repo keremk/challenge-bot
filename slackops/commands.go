@@ -2,6 +2,7 @@ package slackops
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -175,8 +176,11 @@ func executeNewChallenge(env config.Environment, c command) error {
 		channelID:    s.ChannelID,
 		settingsName: c.arg,
 	}
-
-	dialog := newChallengeDialog(s.TriggerID, state)
+	accountList, err := accountNames(env)
+	if err != nil {
+		return err
+	}
+	dialog := newChallengeDialog(s.TriggerID, state, accountList)
 
 	slackClient := slack.New(token)
 	err = slackClient.OpenDialog(s.TriggerID, *dialog)
@@ -184,6 +188,18 @@ func executeNewChallenge(env config.Environment, c command) error {
 		log.Println("[ERROR] Cannot create the dialog ", err)
 	}
 	return err
+}
+
+func accountNames(env config.Environment) ([]string, error) {
+	accounts, err := models.GetAllAccounts(env)
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for _, account := range accounts {
+		names = append(names, account.Name)
+	}
+	return names, nil
 }
 
 func challengeNames(env config.Environment) ([]string, error) {
@@ -229,19 +245,29 @@ func sendChallengeDialog(triggerID string, state dialogState, options []string) 
 	}
 }
 
-func newChallengeDialog(triggerID string, state dialogState) *slack.Dialog {
-	githubOrgEl := slack.NewTextInput("github_org", "Github Organization", "")
-	githubOwnerEl := slack.NewTextInput("github_owner", "Github Owner", "")
+func newChallengeDialog(triggerID string, state dialogState, options []string) *slack.Dialog {
+	fmt.Println(options, len(options))
+	// githubOrgEl := slack.NewTextInput("github_org", "Github Organization", "")
+	// githubOwnerEl := slack.NewTextInput("github_owner", "Github Owner", "")
 	challengeNameEl := slack.NewTextInput("challenge_name", "Challenge Name", "")
 	templateRepoNameEl := slack.NewTextInput("template_repo", "Template Repo Name", "")
 	repoNameFormatEl := slack.NewTextInput("repo_name_format", "Repo Name Format", "test_CHALLENGENAME-GITHUBALIAS")
+	selectOptions := make([]slack.DialogSelectOption, len(options))
+	for i, v := range options {
+		selectOptions[i] = slack.DialogSelectOption{
+			Label: v,
+			Value: v,
+		}
+	}
 
+	githubAccountEl := slack.NewStaticSelectDialogInput("github_account", "Github Account Name", selectOptions)
 	elements := []slack.DialogElement{
-		githubOrgEl,
-		githubOwnerEl,
+		// githubOrgEl,
+		// githubOwnerEl,
 		challengeNameEl,
 		templateRepoNameEl,
 		repoNameFormatEl,
+		githubAccountEl,
 	}
 	return &slack.Dialog{
 		TriggerID:      triggerID,

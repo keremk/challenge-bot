@@ -17,13 +17,34 @@ package repo
 import (
 	"context"
 	"log"
+	"net/http"
 
+	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 )
 
 type githubOps struct {
-	token string
+	usingOAuth bool
+	token      string
+	transport  *ghinstallation.Transport
+}
+
+func newGithubOps(token, privateKeyFilename string) (githubOps, error) {
+	// Shared transport to reuse TCP connections.
+	tr := http.DefaultTransport
+
+	// Wrap the shared transport for use with the integration ID 1 authenticating with installation ID 99.
+	itr, err := ghinstallation.NewKeyFromFile(tr, 1, 1010483, privateKeyFilename)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return githubOps{
+		usingOAuth: true,
+		token:      token,
+		transport:  itr,
+	}, nil
 }
 
 func (ctx githubOps) checkUser(githubAlias string) bool {
@@ -87,10 +108,24 @@ func (ctx githubOps) pushStarterRepo(templateRepoURL string, remoteRepoURL strin
 }
 
 func (ctx githubOps) getClient() (*github.Client, context.Context) {
+	if ctx.usingOAuth {
+		return ctx.getClientWithToken()
+	} else {
+		return ctx.getClientWithTransport()
+	}
+}
+
+func (ctx githubOps) getClientWithToken() (*github.Client, context.Context) {
 	context := context.Background()
 	tokenService := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: ctx.token},
 	)
 	tokenClient := oauth2.NewClient(context, tokenService)
 	return github.NewClient(tokenClient), context
+}
+
+func (ctx githubOps) getClientWithTransport() (*github.Client, context.Context) {
+	context := context.Background()
+
+	return github.NewClient(&http.Client{Transport: ctx.transport}), context
 }

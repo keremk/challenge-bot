@@ -34,7 +34,7 @@ type botInfo struct {
 	BotAccessToken string `json:"bot_access_token"`
 }
 
-type authResponse struct {
+type slAuthResponse struct {
 	Ok          bool    `json:"Ok"`
 	Error       string  `json:"error"`
 	AccessToken string  `json:"access_token"`
@@ -46,10 +46,10 @@ type authResponse struct {
 }
 
 type authHandler struct {
-	env *config.Environment
+	env config.Environment
 }
 
-func (handler authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	slackCode := r.URL.Query().Get("code")
 	if slackCode == "" {
 		log.Println("[ERROR] No code received from slack")
@@ -57,32 +57,32 @@ func (handler authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := handler.callbackSlack(slackCode)
+	resp, err := h.callbackSlack(slackCode)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	authResponse, err := handler.readAndParse(resp)
+	authResp, err := h.readAndParse(resp)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	log.Println("[INFO] User ID: ", authResponse.UserID)
-	log.Println("[INFO] Team ID: ", authResponse.TeamID)
-	log.Println("[INFO] Team Name: ", authResponse.TeamName)
+	log.Println("[INFO] User ID: ", authResp.UserID)
+	log.Println("[INFO] Team ID: ", authResp.TeamID)
+	log.Println("[INFO] Team Name: ", authResp.TeamName)
 
-	err = handler.saveToDB(authResponse)
+	err = h.saveToDB(authResp)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/auth/success.html", http.StatusFound)
+	http.Redirect(w, r, "/auth/slack/success.html", http.StatusFound)
 }
 
-func (handler authHandler) callbackSlack(slackCode string) (*http.Response, error) {
+func (h authHandler) callbackSlack(slackCode string) (*http.Response, error) {
 	client := &http.Client{
 		Timeout: time.Second * 10,
 	}
@@ -93,11 +93,11 @@ func (handler authHandler) callbackSlack(slackCode string) (*http.Response, erro
 	}
 	query := uri.Query()
 	query.Set("code", url.QueryEscape(slackCode))
-	query.Set("client_id", url.QueryEscape(handler.env.SlackClientID))
-	query.Set("client_secret", url.QueryEscape(handler.env.SlackClientSecret))
-	query.Set("redirect_uri", handler.env.SlackRedirectURI)
+	query.Set("client_id", url.QueryEscape(h.env.SlackClientID))
+	query.Set("client_secret", url.QueryEscape(h.env.SlackClientSecret))
+	query.Set("redirect_uri", h.env.SlackRedirectURI)
 
-	log.Println("[INFO] Redirect URI is: ", handler.env.SlackRedirectURI)
+	log.Println("[INFO] Redirect URI is: ", h.env.SlackRedirectURI)
 
 	uri.RawQuery = query.Encode()
 	uriString := uri.String()
@@ -111,35 +111,35 @@ func (handler authHandler) callbackSlack(slackCode string) (*http.Response, erro
 	return resp, err
 }
 
-func (handler authHandler) readAndParse(resp *http.Response) (authResponse, error) {
+func (h authHandler) readAndParse(resp *http.Response) (slAuthResponse, error) {
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(resp.Body)
 	if err != nil {
 		log.Println("[ERROR] Cannot read the response - ", err)
-		return authResponse{}, err
+		return slAuthResponse{}, err
 	}
 
-	var response authResponse
-	err = json.Unmarshal(buf.Bytes(), &response)
+	var authResp slAuthResponse
+	err = json.Unmarshal(buf.Bytes(), &authResp)
 	if err != nil {
 		log.Println("[ERROR] Cannot parse the json - ", err)
-		return authResponse{}, err
+		return slAuthResponse{}, err
 	}
 
-	if response.Ok == false {
+	if authResp.Ok == false {
 		log.Println("[ERROR] Did not get expected auth response - ", buf.String())
-		return authResponse{}, errors.New("[ERROR] Did not get expected auth response")
+		return slAuthResponse{}, errors.New("[ERROR] Did not get expected auth response")
 	}
 
-	return response, nil
+	return authResp, nil
 }
 
-func (handler authHandler) saveToDB(resp authResponse) error {
+func (h authHandler) saveToDB(resp slAuthResponse) error {
 	slackUser := models.SlackUser{
 		ID:    resp.UserID,
 		Token: resp.AccessToken,
 	}
-	err := models.UpdateSlackUser(*handler.env, slackUser)
+	err := models.UpdateSlackUser(h.env, slackUser)
 	if err != nil {
 		return err
 	}
@@ -150,5 +150,5 @@ func (handler authHandler) saveToDB(resp authResponse) error {
 		ID:        resp.TeamID,
 		Name:      resp.TeamName,
 	}
-	return models.UpdateSlackTeam(*handler.env, slackTeam)
+	return models.UpdateSlackTeam(h.env, slackTeam)
 }
