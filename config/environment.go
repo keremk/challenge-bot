@@ -13,6 +13,7 @@ type Environment struct {
 	SlackClientID            string `envconfig:"SLACK_CLIENT_ID" required:"true"`
 	SlackClientSecret        string `envconfig:"SLACK_CLIENT_SECRET" required:"true"`
 	SlackRedirectURI         string `envconfig:"SLACK_REDIRECT_URI" required:"true"`
+	GithubAppID              string `envconfig:"GITHUB_APP_IDENTIFIER" required:"true"`
 	GithubClientID           string `envconfig:"GITHUB_CLIENT_ID" required:"true"`
 	GithubClientSecret       string `envconfig:"GITHUB_CLIENT_SECRET" required:"true"`
 	GithubRedirectURI        string `envconfig:"GITHUB_REDIRECT_URI" required:"true"`
