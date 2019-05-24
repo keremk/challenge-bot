@@ -23,10 +23,8 @@ type Challenge struct {
 
 func NewChallenge(input map[string]string) Challenge {
 	return Challenge{
-		ID:   util.RandomString(16),
-		Name: input["challenge_name"],
-		// GithubOwner:       input["github_owner"],
-		// GithubOrg:         input["github_org"],
+		ID:                util.RandomString(16),
+		Name:              input["challenge_name"],
 		GithubAccountName: input["github_account"],
 		TemplateRepo:      input["template_repo"],
 		RepoNameFormat:    input["repo_name_format"],
