@@ -23,6 +23,8 @@ type ghAuthHandler struct {
 }
 
 func (gh ghAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Println("[INFO] Github Auth Handler called with - ", r.URL.String())
+
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		log.Println("[ERROR] No code received from github")
@@ -43,7 +45,7 @@ func (gh ghAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Comment out below for production code
-	log.Println("Token retrieved = ", authResponse.AccessToken)
+	// log.Println("Token retrieved = ", authResponse.AccessToken)
 
 	installationID := r.URL.Query().Get("state")
 
@@ -118,7 +120,7 @@ func (gh ghAuthHandler) readAndParse(resp *http.Response) (ghAuthResponse, error
 }
 
 func (gh ghAuthHandler) saveToDB(resp ghAuthResponse, installationID string) error {
-	account := models.HardcodedGithubAccount(resp.AccessToken, installationID)
+	account := models.NewGithubAccount(installationID, resp.AccessToken)
 
 	err := models.UpdateGithubAccount(gh.env, account)
 	if err != nil {

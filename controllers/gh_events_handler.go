@@ -3,6 +3,7 @@ package controllers
 import (
 	"log"
 	"net/http"
+	"reflect"
 
 	"github.com/google/go-github/github"
 	"github.com/keremk/challenge-bot/config"
@@ -13,7 +14,8 @@ type ghEventsHandler struct {
 }
 
 func (gh ghEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	payload, err := github.ValidatePayload(r, nil)
+	secretKey := []byte(gh.env.GithubWebhookSecret)
+	payload, err := github.ValidatePayload(r, secretKey)
 	if err != nil {
 		w.WriteHeader(400)
 		log.Println("[ERROR] Could not validate payload - ", err)
@@ -27,7 +29,7 @@ func (gh ghEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("Event received")
+	log.Println("Event received - ")
 
 	switch event := event.(type) {
 	case *github.PullRequestEvent:
@@ -38,5 +40,7 @@ func (gh ghEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if *event.Action == "created" {
 			log.Printf("Installation successful with id = %d", *event.Installation.ID)
 		}
+	default:
+		log.Println("Event is - ", reflect.TypeOf(event))
 	}
 }

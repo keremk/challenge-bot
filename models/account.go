@@ -6,39 +6,20 @@ import (
 
 	"github.com/keremk/challenge-bot/config"
 	"github.com/keremk/challenge-bot/db"
-	"github.com/keremk/challenge-bot/util"
 )
 
 type GithubAccount struct {
-	ID              string
-	Name            string
-	Owner           string
-	Org             string
-	InstallationID  string
-	AccessToken     string
-	CreatedByTeamID string
+	Name           string
+	Owner          string
+	Org            string
+	InstallationID string
+	AccessToken    string
 }
 
-func NewGithubAccount(input map[string]string, token string) GithubAccount {
+func NewGithubAccount(installationID, token string) GithubAccount {
 	return GithubAccount{
-		ID:              util.RandomString(16),
-		Name:            input["name"],
-		Owner:           input["owner"],
-		Org:             input["org"],
-		AccessToken:     token,
-		InstallationID:  input["installation_id"],
-		CreatedByTeamID: input["team_id"],
-	}
-}
-
-func HardcodedGithubAccount(token, installationID string) GithubAccount {
-	return GithubAccount{
-		ID:             "93b8c538c36f67b3e1db343ade0ef",
-		Name:           "Hardcoded",
-		Owner:          "xingtesting",
-		Org:            "",
-		InstallationID: installationID,
 		AccessToken:    token,
+		InstallationID: installationID,
 	}
 }
 
@@ -58,7 +39,7 @@ func UpdateGithubAccount(env config.Environment, account GithubAccount) error {
 	if err != nil {
 		return err
 	}
-	return store.Update(account.ID, account)
+	return store.Update(account.InstallationID, account)
 }
 
 func GetAllAccounts(env config.Environment) ([]GithubAccount, error) {

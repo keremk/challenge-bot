@@ -17,6 +17,7 @@ type Environment struct {
 	GithubClientID           string `envconfig:"GITHUB_CLIENT_ID" required:"true"`
 	GithubClientSecret       string `envconfig:"GITHUB_CLIENT_SECRET" required:"true"`
 	GithubRedirectURI        string `envconfig:"GITHUB_REDIRECT_URI" required:"true"`
+	GithubWebhookSecret      string `envconfig:"GITHUB_WEBHOOK_SECRET" required:"true"`
 	GithubPrivateKeyFilename string `envconfig:"GITHUB_PRIVATEKEYFILENAME" required:"true"`
 	GCloudProjectID          string `envconfig:"GCLOUD_PROJECT_ID" required:"true"`
 	DbProvider               string `envconfig:"DB_PROVIDER" required:"true"`

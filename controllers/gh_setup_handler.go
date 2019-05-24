@@ -24,17 +24,6 @@ func (gh ghSetupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	userAuthURI := gh.getUserAuthURI(installationID)
 
 	http.Redirect(w, r, userAuthURI, http.StatusFound)
-	// if err != nil {
-	// 	w.WriteHeader(http.StatusInternalServerError)
-	// 	log.Println("[ERROR] Could not initiate the user auth flow - ", err)
-	// 	return
-	// }
-
-	// if resp.StatusCode < 200 || resp.StatusCode > 299 {
-	// 	w.WriteHeader(http.StatusInternalServerError)
-	// 	log.Println("[ERROR] Could not initiate the user auth flow - ", resp.Status)
-	// 	return
-	// }
 }
 
 func (gh ghSetupHandler) getUserAuthURI(installationID string) string {
@@ -49,10 +38,4 @@ func (gh ghSetupHandler) getUserAuthURI(installationID string) string {
 
 	uri.RawQuery = query.Encode()
 	return uri.String()
-
-	// resp, err := client.Get(uriString)
-	// if err != nil {
-	// 	log.Println("[ERROR] Cannot reach Github to send user OAuth setup - ", err)
-	// }
-	// return resp, err
 }
