@@ -9,7 +9,7 @@ Below you will find sections on:
 * How to contribute to it
 
 ## Quick Start
-If everything is already setup for you (as described in following stages), and all you want to do is to send a coding challenge to someone, then just jump to this [section](Send-a-coding-challenge).
+If everything is already setup for you (as described in following stages), and all you want to do is to send a coding challenge to someone, then just jump to this [section](#Send-a-coding-challenge).
 
 ## Usage
 This section assumes that you have setup this application either [yourself](#Self-Host-Setup) or somebody else did it for you and you want to use it in your Slack workgroup. (Note that this app is currently not available for use publicly, it is still in development, but you can try self hosting it.)
