@@ -12,16 +12,15 @@ import (
 // Integration test
 func TestCreatingChallenge(t *testing.T) {
 	env := config.NewEnvironment("production")
-	ctx := NewActionContext(env)
-
 	candidate := models.Candidate{
 		Name:          "Foo bar",
 		GithubAlias:   "keremktest1",
 		ResumeURL:     "http://foo.com",
 		ChallengeName: "Test123",
 	}
-	challenge, _ := models.GetChallenge(env, candidate.ChallengeName)
+	challenge, _ := models.GetChallengeSetup(env, candidate.ChallengeName)
 	fmt.Println(challenge)
+	ctx := NewActionContext(env, challenge)
 
 	repoURL, err := ctx.CreateChallenge(candidate, challenge)
 
