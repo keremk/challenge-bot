@@ -44,6 +44,8 @@ func ExecuteCommand(env config.Environment, request *http.Request) error {
 			go executeNewChallenge(env, c)
 		case "send":
 			go executeSendChallenge(env, c)
+		case "reviewer":
+			go executeAddReviewer(env, c)
 		}
 	default:
 		log.Println("[ERROR] Unexpected Command ", c.mainCommand)
@@ -150,11 +152,17 @@ func executeSendChallenge(env config.Environment, c command) error {
 		channelID:    s.ChannelID,
 		settingsName: c.arg,
 	}
-	challengeList, err := challengeNames(env)
+	challengeList, err := models.GetAllChallenges(env)
 	if err != nil {
 		return err
 	}
-	dialog := sendChallengeDialog(s.TriggerID, state, challengeList)
+
+	reviewerList, err := models.GetAllReviewers(env)
+	if err != nil {
+		return err
+	}
+
+	dialog := sendChallengeDialog(s.TriggerID, state, challengeList, reviewerList)
 
 	slackClient := slack.New(token)
 	err = slackClient.OpenDialog(s.TriggerID, *dialog)
@@ -176,7 +184,7 @@ func executeNewChallenge(env config.Environment, c command) error {
 		channelID:    s.ChannelID,
 		settingsName: c.arg,
 	}
-	accountList, err := accountNames(env)
+	accountList, err := models.GetAllAccounts(env)
 	if err != nil {
 		return err
 	}
@@ -190,48 +198,62 @@ func executeNewChallenge(env config.Environment, c command) error {
 	return err
 }
 
-func accountNames(env config.Environment) ([]string, error) {
-	accounts, err := models.GetAllAccounts(env)
+func executeAddReviewer(env config.Environment, c command) error {
+	s := c.slashCommand
+	token, err := getBotToken(env, s.TeamID)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	var names []string
-	for _, account := range accounts {
-		names = append(names, account.Name)
+
+	// Create the dialog and send a message to open it
+	state := dialogState{
+		channelID:    s.ChannelID,
+		settingsName: c.arg,
 	}
-	return names, nil
+	challengeList, err := models.GetAllChallenges(env)
+	if err != nil {
+		return err
+	}
+	dialog := newAddReviewerDialog(s.TriggerID, state, challengeList)
+
+	slackClient := slack.New(token)
+	err = slackClient.OpenDialog(s.TriggerID, *dialog)
+	if err != nil {
+		log.Println("[ERROR] Cannot create the dialog ", err)
+	}
+	return err
 }
 
-func challengeNames(env config.Environment) ([]string, error) {
-	settings, err := models.GetAllChallenges(env)
-	if err != nil {
-		return nil, err
-	}
-	var names []string
-	for _, setting := range settings {
-		names = append(names, setting.Name)
-	}
-	return names, nil
-}
-
-func sendChallengeDialog(triggerID string, state dialogState, options []string) *slack.Dialog {
+func sendChallengeDialog(triggerID string, state dialogState, challenges []models.Challenge, reviewers []models.Reviewer) *slack.Dialog {
 	candidateNameElement := slack.NewTextInput("candidate_name", "Candidate Name", "")
 	githubNameElement := slack.NewTextInput("github_alias", "Github Alias", "")
 	resumeURLElement := slack.NewTextInput("resume_URL", "Resume URL", "")
-	selectOptions := make([]slack.DialogSelectOption, len(options))
-	for i, v := range options {
-		selectOptions[i] = slack.DialogSelectOption{
-			Label: v,
-			Value: v,
+	challengeOptions := make([]slack.DialogSelectOption, len(challenges))
+	for i, v := range challenges {
+		challengeOptions[i] = slack.DialogSelectOption{
+			Label: v.Name,
+			Value: v.Name,
 		}
 	}
-	challengeNameElement := slack.NewStaticSelectDialogInput("challenge_name", "Challenge Name", selectOptions)
+	challengeNameElement := slack.NewStaticSelectDialogInput("challenge_name", "Challenge Name", challengeOptions)
+
+	reviewerOptions := make([]slack.DialogSelectOption, len(reviewers))
+	for i, v := range reviewers {
+		reviewerOptions[i] = slack.DialogSelectOption{
+			Label: v.Name,
+			Value: v.ID,
+		}
+	}
+	reviewer1OptionsElement := slack.NewStaticSelectDialogInput("reviewer1_id", "Reviewer 1", reviewerOptions)
+	reviewer2OptionsElement := slack.NewStaticSelectDialogInput("reviewer2_id", "Reviewer 2", reviewerOptions)
 
 	elements := []slack.DialogElement{
 		candidateNameElement,
 		githubNameElement,
 		resumeURLElement,
 		challengeNameElement,
+		reviewer1OptionsElement,
+		reviewer2OptionsElement,
 	}
 
 	return &slack.Dialog{
@@ -245,25 +267,21 @@ func sendChallengeDialog(triggerID string, state dialogState, options []string) 
 	}
 }
 
-func newChallengeDialog(triggerID string, state dialogState, options []string) *slack.Dialog {
+func newChallengeDialog(triggerID string, state dialogState, options []models.GithubAccount) *slack.Dialog {
 	fmt.Println(options, len(options))
-	// githubOrgEl := slack.NewTextInput("github_org", "Github Organization", "")
-	// githubOwnerEl := slack.NewTextInput("github_owner", "Github Owner", "")
 	challengeNameEl := slack.NewTextInput("challenge_name", "Challenge Name", "")
 	templateRepoNameEl := slack.NewTextInput("template_repo", "Template Repo Name", "")
 	repoNameFormatEl := slack.NewTextInput("repo_name_format", "Repo Name Format", "test_CHALLENGENAME-GITHUBALIAS")
 	selectOptions := make([]slack.DialogSelectOption, len(options))
 	for i, v := range options {
 		selectOptions[i] = slack.DialogSelectOption{
-			Label: v,
-			Value: v,
+			Label: v.Name,
+			Value: v.Name,
 		}
 	}
 
 	githubAccountEl := slack.NewStaticSelectDialogInput("github_account", "Github Account Name", selectOptions)
 	elements := []slack.DialogElement{
-		// githubOrgEl,
-		// githubOwnerEl,
 		challengeNameEl,
 		templateRepoNameEl,
 		repoNameFormatEl,
@@ -274,6 +292,34 @@ func newChallengeDialog(triggerID string, state dialogState, options []string) *
 		CallbackID:     "new_challenge",
 		Title:          "New Coding Challenge",
 		SubmitLabel:    "Create",
+		NotifyOnCancel: false,
+		State:          state.string(),
+		Elements:       elements,
+	}
+}
+
+func newAddReviewerDialog(triggerID string, state dialogState, options []models.Challenge) *slack.Dialog {
+	reviewerEl := slack.NewUsersSelect("reviewer_id", "Reviewer")
+	githubNameElement := slack.NewTextInput("github_alias", "Github Alias", "")
+	selectOptions := make([]slack.DialogSelectOption, len(options))
+	for i, v := range options {
+		selectOptions[i] = slack.DialogSelectOption{
+			Label: v.Name,
+			Value: v.Name,
+		}
+	}
+
+	challengeNameEl := slack.NewStaticSelectDialogInput("challenge_name", "Challenge Name", selectOptions)
+	elements := []slack.DialogElement{
+		reviewerEl,
+		githubNameElement,
+		challengeNameEl,
+	}
+	return &slack.Dialog{
+		TriggerID:      triggerID,
+		CallbackID:     "new_reviewer",
+		Title:          "Add Reviewer",
+		SubmitLabel:    "Add",
 		NotifyOnCancel: false,
 		State:          state.string(),
 		Elements:       elements,

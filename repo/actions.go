@@ -50,7 +50,7 @@ func (ctx ActionContext) CheckUser(githubAlias string) bool {
 
 // Creates a coding challenge for a given candidate and challenge type.
 // The coding challenge is created based on the configuration settings the .challenge.yaml file
-func (ctx ActionContext) CreateChallenge(candidate models.Candidate, challenge models.ChallengeSetup) (string, error) {
+func (ctx ActionContext) CreateChallenge(candidate models.Candidate, challenge models.ChallengeSetup, reviewers []models.Reviewer) (string, error) {
 	repoName := challengeRepoName(challenge.RepoNameFormat, challenge.Name, candidate.GithubAlias)
 	challengeRepoURL, err := ctx.createStarterRepo(repoName, challenge)
 	if err != nil {
@@ -67,6 +67,14 @@ func (ctx ActionContext) CreateChallenge(candidate models.Candidate, challenge m
 	if err != nil {
 		log.Println("[ERROR] Cannot add the candidate as a collaborator ", candidate.GithubAlias)
 		return challengeRepoURL, err
+	}
+
+	for _, reviewer := range reviewers {
+		err = ctx.addCollaborator(reviewer.GithubAlias, repoName, challenge.OrgOrOwner())
+		if err != nil {
+			log.Println("[ERROR] Cannot add the reviewer as a collaborator ", reviewer.GithubAlias)
+			return challengeRepoURL, err
+		}
 	}
 
 	log.Println("[INFO] Challenge repo is successfully created and user added.")
