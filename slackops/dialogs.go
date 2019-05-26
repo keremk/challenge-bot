@@ -42,7 +42,7 @@ func (d dialogState) string() string {
 }
 
 func HandleDialogResponse(env config.Environment, readCloser io.ReadCloser) error {
-	icb, err := parseChallengeStart(readCloser, env.VerificationToken)
+	icb, err := parseInteractionCallback(readCloser, env.VerificationToken)
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func sendChallenge(env config.Environment, challenge models.ChallengeSetup, cand
 		}
 	}
 
-	log.Println("[INFO] Reviewer count = ", len(reviewers))
+	// log.Println("[INFO] Reviewer count = ", len(reviewers))
 
 	// Create the challenge
 	postMessage(env, teamID, targetChannel, toMsgOption("Please be patient, while I go create a coding challenge for you..."))
@@ -174,7 +174,7 @@ func handleNewChallenge(env config.Environment, icb slack.InteractionCallback) e
 
 func handleAddReviewer(env config.Environment, icb slack.InteractionCallback) error {
 	addReviewerInput := icb.Submission
-	log.Println("[INFO] Reviewer data", addReviewerInput)
+	// log.Println("[INFO] Reviewer data", addReviewerInput)
 
 	user, err := getUserInfo(env, addReviewerInput["reviewer_id"], icb.Team.ID)
 	if err != nil {
@@ -182,7 +182,7 @@ func handleAddReviewer(env config.Environment, icb slack.InteractionCallback) er
 	}
 
 	reviewer := models.NewReviewer(user.Name, addReviewerInput)
-	log.Println("[INFO] Reviewer is ", reviewer)
+	// log.Println("[INFO] Reviewer is ", reviewer)
 
 	err = models.UpdateReviewer(env, reviewer)
 	if err != nil {
@@ -227,7 +227,7 @@ func postMessage(env config.Environment, teamID string, targetChannel string, ms
 	return nil
 }
 
-func parseChallengeStart(readCloser io.ReadCloser, verificationToken string) (slack.InteractionCallback, error) {
+func parseInteractionCallback(readCloser io.ReadCloser, verificationToken string) (slack.InteractionCallback, error) {
 	payload, err := payloadContents(readCloser)
 	if err != nil {
 		return slack.InteractionCallback{}, err

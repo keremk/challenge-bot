@@ -37,6 +37,10 @@ func setupSlackListeners(env config.Environment) {
 	http.Handle("/requests", &dialogHandler{
 		env: env,
 	})
+	http.Handle("/options", &optionsHandler{
+		env: env,
+	})
+
 	http.Handle("/auth/slack/", http.StripPrefix("/auth/slack/", http.FileServer(http.Dir("./static/slack"))))
 	http.Handle("/auth/slack/redirect", &authHandler{
 		env: env,
