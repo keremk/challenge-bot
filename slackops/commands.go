@@ -132,6 +132,13 @@ func executeHelp(c command) error {
 				"type": "mrkdwn",
 				"text": "*/challenge send* : Opens a dialog to send a challenge to a candidate"
 			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*/challenge review* : Opens a dialog to register a reviewer for a challenge"
+			}
 		}
 	]
 }
