@@ -152,8 +152,8 @@ func executeSendChallenge(env config.Environment, c command) error {
 
 	// Create the dialog and send a message to open it
 	state := dialogState{
-		channelID:    s.ChannelID,
-		settingsName: c.arg,
+		channelID:     s.ChannelID,
+		challengeName: c.arg,
 	}
 	dialog := sendChallengeDialog(s.TriggerID, state)
 
@@ -174,8 +174,8 @@ func executeNewChallenge(env config.Environment, c command) error {
 
 	// Create the dialog and send a message to open it
 	state := dialogState{
-		channelID:    s.ChannelID,
-		settingsName: c.arg,
+		channelID:     s.ChannelID,
+		challengeName: c.arg,
 	}
 	dialog := newChallengeDialog(s.TriggerID, state)
 
@@ -196,8 +196,8 @@ func executeAddReviewer(env config.Environment, c command) error {
 
 	// Create the dialog and send a message to open it
 	state := dialogState{
-		channelID:    s.ChannelID,
-		settingsName: c.arg,
+		channelID:     s.ChannelID,
+		challengeName: c.arg,
 	}
 	challengeList, err := models.GetAllChallenges(env)
 	if err != nil {
@@ -218,8 +218,8 @@ func sendChallengeDialog(triggerID string, state dialogState) *slack.Dialog {
 	githubNameElement := slack.NewTextInput("github_alias", "Github Alias", "")
 	resumeURLElement := slack.NewTextInput("resume_URL", "Resume URL", "")
 	challengeNameElement := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
-	reviewer1OptionsElement := newExternalOptionsDialogInput("reviewer1_id", "Reviewer 1", state.settingsName, false)
-	reviewer2OptionsElement := newExternalOptionsDialogInput("reviewer2_id", "Reviewer 2", state.settingsName, true)
+	reviewer1OptionsElement := newExternalOptionsDialogInput("reviewer1_id", "Reviewer 1", state.challengeName, false)
+	reviewer2OptionsElement := newExternalOptionsDialogInput("reviewer2_id", "Reviewer 2", state.challengeName, true)
 
 	elements := []slack.DialogElement{
 		candidateNameElement,
