@@ -76,6 +76,7 @@ You can register reviewers to review coding challenges. In order to do that:
   * *Reviewer* From the drop-down select the name of the reviewer you like to register
   * *Github Alias* Type in the github alias for the reviewer
   * *Challenge Name* Select from the drop-down the challenge name the reviewer will be able to review.
+  * *Technology List* Add a comma delimited list of languages/technologies which the reviewer can evaluate. E.g. ruby,elixir 
 
 ### Send a coding challenge
 In order to send a coding challenge, you can type in the below: (We recommend you to create a specific Slack channel for all the coding challenges you will be sending. If there are multiple challenges for different positions, it is better to create different channels for each in Slack)

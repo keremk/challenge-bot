@@ -278,20 +278,14 @@ func newChallengeDialog(triggerID string, state dialogState) *slack.Dialog {
 
 func newAddReviewerDialog(triggerID string, state dialogState, options []models.Challenge) *slack.Dialog {
 	reviewerEl := slack.NewUsersSelect("reviewer_id", "Reviewer")
-	githubNameElement := slack.NewTextInput("github_alias", "Github Alias", "")
-	selectOptions := make([]slack.DialogSelectOption, len(options))
-	for i, v := range options {
-		selectOptions[i] = slack.DialogSelectOption{
-			Label: v.Name,
-			Value: v.Name,
-		}
-	}
-
-	challengeNameEl := slack.NewStaticSelectDialogInput("challenge_name", "Challenge Name", selectOptions)
+	githubNameEl := slack.NewTextInput("github_alias", "Github Alias", "")
+	challengeNameEl := newExternalOptionsDialogInput("challenge_name", "Challenge Name")
+	technologyListEl := slack.NewTextInput("technology_list", "Technology List", "")
 	elements := []slack.DialogElement{
 		reviewerEl,
-		githubNameElement,
+		githubNameEl,
 		challengeNameEl,
+		technologyListEl,
 	}
 	return &slack.Dialog{
 		TriggerID:      triggerID,

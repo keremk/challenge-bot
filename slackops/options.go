@@ -26,12 +26,16 @@ func HandleOptions(env config.Environment, readCloser io.ReadCloser) ([]byte, er
 		return nil, err
 	}
 
+	// log.Println("[INFO] ICB is - ", icb)
 	switch icb.CallbackID {
 	case "send_challenge":
 		respJSON, err := handleSendChallengeOptions(env, icb)
 		return respJSON, err
 	case "new_challenge":
 		respJSON, err := handleNewChallengeOptions(env, icb)
+		return respJSON, err
+	case "new_reviewer":
+		respJSON, err := handleNewReviewerOptions(env, icb)
 		return respJSON, err
 	default:
 		err = errors.New("[ERROR] Unknown dialog response")
@@ -144,4 +148,17 @@ func getAccountsList(env config.Environment) ([]byte, error) {
 		return nil, err
 	}
 	return js, nil
+}
+
+func handleNewReviewerOptions(env config.Environment, icb slack.InteractionCallback) ([]byte, error) {
+	switch icb.Name {
+	case "challenge_name":
+		js, err := getChallengeList(env)
+		if err != nil {
+			return nil, err
+		}
+		return js, nil
+	default:
+		return nil, nil
+	}
 }

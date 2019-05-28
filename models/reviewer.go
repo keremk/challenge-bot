@@ -10,20 +10,22 @@ import (
 )
 
 type Reviewer struct {
-	ID            string
-	Name          string
-	GithubAlias   string
-	SlackID       string
-	ChallengeName string
+	ID             string
+	Name           string
+	GithubAlias    string
+	SlackID        string
+	TechnologyList string
+	ChallengeName  string
 }
 
 func NewReviewer(name string, input map[string]string) Reviewer {
 	return Reviewer{
-		ID:            util.RandomString(16),
-		Name:          name,
-		GithubAlias:   input["github_alias"],
-		SlackID:       input["reviewer_id"],
-		ChallengeName: input["challenge_name"],
+		ID:             util.RandomString(16),
+		Name:           name,
+		GithubAlias:    input["github_alias"],
+		SlackID:        input["reviewer_id"],
+		TechnologyList: input["technology_list"],
+		ChallengeName:  input["challenge_name"],
 	}
 }
 
