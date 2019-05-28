@@ -60,7 +60,23 @@ func (s FirestoreDb) FindFirst(key, value string, obj interface{}) error {
 	return docs[0].DataTo(obj)
 }
 
+type searchFunc = func(client *firestore.Client, ctx context.Context) ([]*firestore.DocumentSnapshot, error)
+
+func (s FirestoreDb) FindAllWithKeyValue(itemType reflect.Type, key, value string) (interface{}, error) {
+	return s.find(itemType, func(client *firestore.Client, ctx context.Context) ([]*firestore.DocumentSnapshot, error) {
+		docs, err := client.Collection(s.collection).Where(key, "==", value).Documents(ctx).GetAll()
+		return docs, err
+	})
+}
+
 func (s FirestoreDb) FindAll(itemType reflect.Type) (interface{}, error) {
+	return s.find(itemType, func(client *firestore.Client, ctx context.Context) ([]*firestore.DocumentSnapshot, error) {
+		docs, err := client.Collection(s.collection).Documents(ctx).GetAll()
+		return docs, err
+	})
+}
+
+func (s FirestoreDb) find(itemType reflect.Type, searchFunc searchFunc) (interface{}, error) {
 	if itemType.Kind() != reflect.Slice {
 		panic("FindAll is expecting a type of kind slice")
 	}
@@ -71,11 +87,10 @@ func (s FirestoreDb) FindAll(itemType reflect.Type) (interface{}, error) {
 	}
 	defer client.Close()
 
-	docs, err := client.Collection(s.collection).Documents(ctx).GetAll()
+	docs, err := searchFunc(client, ctx)
 	if err != nil || (len(docs) < 1) {
 		log.Println("[ERROR] cannot find object", err)
 		return nil, err
-
 	}
 
 	slice := reflect.MakeSlice(itemType, 0, 100)

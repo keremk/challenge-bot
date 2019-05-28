@@ -55,6 +55,21 @@ func GetAllReviewers(env config.Environment) ([]Reviewer, error) {
 	return all, err
 }
 
+func GetAllReviewersForChallenge(env config.Environment, challengeName string) ([]Reviewer, error) {
+	store, err := db.NewStore(env, db.ReviewersCollection)
+	if err != nil {
+		return nil, err
+	}
+
+	var all []Reviewer
+	result, err := store.FindAllWithKeyValue(reflect.TypeOf(all), "ChallengeName", challengeName)
+	all, ok := result.([]Reviewer)
+	if !ok {
+		return nil, errors.New("[ERROR] Cannot convert")
+	}
+	return all, err
+}
+
 func UpdateReviewer(env config.Environment, reviewer Reviewer) error {
 	store, err := db.NewStore(env, db.ReviewersCollection)
 	if err != nil {

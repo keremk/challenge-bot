@@ -217,9 +217,9 @@ func sendChallengeDialog(triggerID string, state dialogState) *slack.Dialog {
 	candidateNameElement := slack.NewTextInput("candidate_name", "Candidate Name", "")
 	githubNameElement := slack.NewTextInput("github_alias", "Github Alias", "")
 	resumeURLElement := slack.NewTextInput("resume_URL", "Resume URL", "")
-	challengeNameElement := newExternalOptionsDialogInput("challenge_name", "Challenge Name")
-	reviewer1OptionsElement := newExternalOptionsDialogInput("reviewer1_id", "Reviewer 1")
-	reviewer2OptionsElement := newExternalOptionsDialogInput("reviewer2_id", "Reviewer 2")
+	challengeNameElement := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
+	reviewer1OptionsElement := newExternalOptionsDialogInput("reviewer1_id", "Reviewer 1", state.settingsName, false)
+	reviewer2OptionsElement := newExternalOptionsDialogInput("reviewer2_id", "Reviewer 2", state.settingsName, true)
 
 	elements := []slack.DialogElement{
 		candidateNameElement,
@@ -241,13 +241,13 @@ func sendChallengeDialog(triggerID string, state dialogState) *slack.Dialog {
 	}
 }
 
-func newExternalOptionsDialogInput(name, label string) *slack.DialogInputSelect {
+func newExternalOptionsDialogInput(name, label, value string, optional bool) *slack.DialogInputSelect {
 	return &slack.DialogInputSelect{
 		DialogInput: slack.DialogInput{
 			Type:     slack.InputTypeSelect,
 			Name:     name,
 			Label:    label,
-			Optional: true,
+			Optional: optional,
 		},
 		DataSource: slack.DialogDataSourceExternal,
 	}
@@ -258,7 +258,7 @@ func newChallengeDialog(triggerID string, state dialogState) *slack.Dialog {
 	templateRepoNameEl := slack.NewTextInput("template_repo", "Template Repo Name", "")
 	repoNameFormatEl := slack.NewTextInput("repo_name_format", "Repo Name Format", "test_CHALLENGENAME-GITHUBALIAS")
 
-	githubAccountEl := newExternalOptionsDialogInput("github_account", "Github Account Name")
+	githubAccountEl := newExternalOptionsDialogInput("github_account", "Github Account Name", "", false)
 	elements := []slack.DialogElement{
 		challengeNameEl,
 		templateRepoNameEl,
@@ -279,7 +279,7 @@ func newChallengeDialog(triggerID string, state dialogState) *slack.Dialog {
 func newAddReviewerDialog(triggerID string, state dialogState, options []models.Challenge) *slack.Dialog {
 	reviewerEl := slack.NewUsersSelect("reviewer_id", "Reviewer")
 	githubNameEl := slack.NewTextInput("github_alias", "Github Alias", "")
-	challengeNameEl := newExternalOptionsDialogInput("challenge_name", "Challenge Name")
+	challengeNameEl := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
 	technologyListEl := slack.NewTextInput("technology_list", "Technology List", "")
 	elements := []slack.DialogElement{
 		reviewerEl,

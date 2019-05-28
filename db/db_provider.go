@@ -19,6 +19,7 @@ type CrudOps interface {
 	FindByID(id string, obj interface{}) error
 	FindFirst(key, value string, obj interface{}) error
 	FindAll(itemType reflect.Type) (interface{}, error)
+	FindAllWithKeyValue(itemType reflect.Type, key, value string) (interface{}, error)
 }
 
 func NewStore(env config.Environment, collection string) (CrudOps, error) {

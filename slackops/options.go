@@ -26,7 +26,7 @@ func HandleOptions(env config.Environment, readCloser io.ReadCloser) ([]byte, er
 		return nil, err
 	}
 
-	// log.Println("[INFO] ICB is - ", icb)
+	// log.Println("[INFO] ICB state is - ", icb.State)
 	switch icb.CallbackID {
 	case "send_challenge":
 		respJSON, err := handleSendChallengeOptions(env, icb)
@@ -55,7 +55,11 @@ func handleSendChallengeOptions(env config.Environment, icb slack.InteractionCal
 	case "reviewer1_id":
 		fallthrough
 	case "reviewer2_id":
-		js, err := getReviewerList(env)
+		state, err := stateFromString(icb.State)
+		if err != nil {
+			panic("Unknown error handling state")
+		}
+		js, err := getReviewerList(env, state.challengeName)
 		if err != nil {
 			return nil, err
 		}
@@ -89,8 +93,14 @@ func getChallengeList(env config.Environment) ([]byte, error) {
 	return js, nil
 }
 
-func getReviewerList(env config.Environment) ([]byte, error) {
-	reviewerList, err := models.GetAllReviewers(env)
+func getReviewerList(env config.Environment, challengeName string) ([]byte, error) {
+	var reviewerList []models.Reviewer
+	var err error
+	if challengeName == "" {
+		reviewerList, err = models.GetAllReviewers(env)
+	} else {
+		reviewerList, err = models.GetAllReviewersForChallenge(env, challengeName)
+	}
 	if err != nil {
 		return nil, err
 	}
