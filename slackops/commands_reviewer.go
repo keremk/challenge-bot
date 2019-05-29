@@ -2,7 +2,6 @@ package slackops
 
 import (
 	"github.com/keremk/challenge-bot/config"
-	"github.com/keremk/challenge-bot/models"
 	"github.com/nlopes/slack"
 )
 
@@ -46,16 +45,12 @@ func executeNewReviewer(env config.Environment, c command) error {
 		channelID:     s.ChannelID,
 		challengeName: c.arg,
 	}
-	challengeList, err := models.GetAllChallenges(env)
-	if err != nil {
-		return err
-	}
-	dialog := newAddReviewerDialog(s.TriggerID, state, challengeList)
+	dialog := newAddReviewerDialog(s.TriggerID, state)
 
 	return showDialog(env, s.TeamID, s.TriggerID, dialog)
 }
 
-func newAddReviewerDialog(triggerID string, state dialogState, options []models.Challenge) slack.Dialog {
+func newAddReviewerDialog(triggerID string, state dialogState) slack.Dialog {
 	reviewerEl := slack.NewUsersSelect("reviewer_id", "Reviewer")
 	githubNameEl := slack.NewTextInput("github_alias", "Github Alias", "")
 	challengeNameEl := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
@@ -85,16 +80,12 @@ func executeSchedule(env config.Environment, c command) error {
 		channelID:     s.ChannelID,
 		challengeName: c.arg,
 	}
-	challengeList, err := models.GetAllChallenges(env)
-	if err != nil {
-		return err
-	}
-	dialog := newScheduleDialog(s.TriggerID, state, challengeList)
+	dialog := newScheduleDialog(s.TriggerID, state)
 
 	return showDialog(env, s.TeamID, s.TriggerID, dialog)
 }
 
-func newScheduleDialog(triggerID string, state dialogState, options []models.Challenge) slack.Dialog {
+func newScheduleDialog(triggerID string, state dialogState) slack.Dialog {
 	reviewerEl := slack.NewUsersSelect("reviewer_id", "Reviewer")
 	githubNameEl := slack.NewTextInput("github_alias", "Github Alias", "")
 	challengeNameEl := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
