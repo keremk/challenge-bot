@@ -7,11 +7,11 @@ import (
 	"github.com/keremk/challenge-bot/slackops"
 )
 
-type CommandHandler struct {
+type commandHandler struct {
 	env config.Environment
 }
 
-func (h CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h commandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := slackops.ExecuteCommand(h.env, r)
 	if err != nil {
 		switch err.(type) {

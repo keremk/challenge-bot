@@ -31,7 +31,7 @@ func SetupRoutes() {
 }
 
 func setupSlackListeners(env config.Environment) {
-	http.Handle("/commands", &CommandHandler{
+	http.Handle("/commands", &commandHandler{
 		env: env,
 	})
 	http.Handle("/requests", &dialogHandler{
