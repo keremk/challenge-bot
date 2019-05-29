@@ -34,7 +34,7 @@ func setupSlackListeners(env config.Environment) {
 	http.Handle("/commands", &commandHandler{
 		env: env,
 	})
-	http.Handle("/requests", &dialogHandler{
+	http.Handle("/requests", &requestsHandler{
 		env: env,
 	})
 	http.Handle("/options", &optionsHandler{

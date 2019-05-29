@@ -8,11 +8,11 @@ import (
 	"github.com/keremk/challenge-bot/slackops"
 )
 
-type dialogHandler struct {
+type requestsHandler struct {
 	env config.Environment
 }
 
-func (h *dialogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h requestsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := slackops.HandleRequests(h.env, r.Body)
 
 	if err != nil {
