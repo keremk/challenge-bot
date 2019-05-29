@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/keremk/challenge-bot/slackops"
 	"github.com/keremk/challenge-bot/config"
+	"github.com/keremk/challenge-bot/slackops"
 )
 
 type dialogHandler struct {
@@ -13,7 +13,7 @@ type dialogHandler struct {
 }
 
 func (h *dialogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	err := slackops.HandleDialogResponse(h.env, r.Body)
+	err := slackops.HandleRequests(h.env, r.Body)
 
 	if err != nil {
 		switch err.(type) {

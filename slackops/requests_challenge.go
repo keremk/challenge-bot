@@ -1,15 +1,10 @@
 package slackops
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
-	"net/url"
 	"regexp"
-	"strings"
 
 	"github.com/keremk/challenge-bot/config"
 	"github.com/keremk/challenge-bot/models"
@@ -17,49 +12,6 @@ import (
 
 	"github.com/nlopes/slack"
 )
-
-const dreadedPrivateRepoError = "422 Visibility can't be private"
-
-type dialogState struct {
-	channelID     string
-	challengeName string
-}
-
-func stateFromString(s string) (dialogState, error) {
-	x := strings.Split(s, ",")
-	if len(x) < 2 {
-		return dialogState{}, errors.New("[ERROR] state persisted incorrectly")
-	}
-
-	return dialogState{
-		channelID:     x[0],
-		challengeName: x[1],
-	}, nil
-}
-
-func (d dialogState) string() string {
-	return fmt.Sprintf("%s,%s", d.channelID, d.challengeName)
-}
-
-func HandleDialogResponse(env config.Environment, readCloser io.ReadCloser) error {
-	icb, err := parseInteractionCallback(readCloser, env.VerificationToken)
-	if err != nil {
-		return err
-	}
-
-	switch icb.CallbackID {
-	case "send_challenge":
-		err = handleSendChallenge(env, icb)
-	case "new_challenge":
-		err = handleNewChallenge(env, icb)
-	case "new_reviewer":
-		err = handleAddReviewer(env, icb)
-	default:
-		err = errors.New("[ERROR] Unknown dialog response")
-		log.Println("[ERROR] Unknown dialog response")
-	}
-	return err
-}
 
 func handleSendChallenge(env config.Environment, icb slack.InteractionCallback) error {
 	candidate, reviewers, err := parseSendDialogInput(env, icb.Submission)
@@ -172,30 +124,6 @@ func handleNewChallenge(env config.Environment, icb slack.InteractionCallback) e
 	return nil
 }
 
-func handleAddReviewer(env config.Environment, icb slack.InteractionCallback) error {
-	addReviewerInput := icb.Submission
-	// log.Println("[INFO] Reviewer data", addReviewerInput)
-
-	user, err := getUserInfo(env, addReviewerInput["reviewer_id"], icb.Team.ID)
-	if err != nil {
-		return err
-	}
-
-	reviewer := models.NewReviewer(user.Name, addReviewerInput)
-	// log.Println("[INFO] Reviewer is ", reviewer)
-
-	err = models.UpdateReviewer(env, reviewer)
-	if err != nil {
-		log.Println("[ERROR] Could not update reviewer in db ", err)
-		_ = postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption("We were not able to create the new reviewer"))
-		return err
-	}
-
-	msgText := fmt.Sprintf("We created a reviewer named %s in our database. They will be reviewing: %s, and their Github alias is: %s", reviewer.Name, reviewer.ChallengeName, reviewer.GithubAlias)
-	_ = postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption(msgText))
-	return nil
-}
-
 func getUserInfo(env config.Environment, id, teamID string) (slack.User, error) {
 	token, err := getBotToken(env, teamID)
 	if err != nil {
@@ -210,59 +138,4 @@ func getUserInfo(env config.Environment, id, teamID string) (slack.User, error) 
 	}
 
 	return *user, nil
-}
-
-func toMsgOption(text string) slack.MsgOption {
-	return slack.MsgOptionText(text, false)
-}
-
-func postMessage(env config.Environment, teamID string, targetChannel string, msgOption slack.MsgOption) error {
-	token, err := getBotToken(env, teamID)
-	if err != nil {
-		return err
-	}
-
-	slackClient := slack.New(token)
-	slackClient.PostMessage(targetChannel, msgOption)
-	return nil
-}
-
-func parseInteractionCallback(readCloser io.ReadCloser, verificationToken string) (slack.InteractionCallback, error) {
-	payload, err := payloadContents(readCloser)
-	if err != nil {
-		return slack.InteractionCallback{}, err
-	}
-
-	var icb slack.InteractionCallback
-	err = json.Unmarshal([]byte(payload), &icb)
-	if err != nil {
-		log.Println("[ERROR] Unable to unmarshall json response", err)
-		return slack.InteractionCallback{}, err
-	}
-
-	if icb.Token != verificationToken {
-		log.Println("[ERROR] Unable to validate request ", err)
-		return slack.InteractionCallback{}, ValidationError{}
-	}
-
-	return icb, nil
-}
-
-func payloadContents(readCloser io.ReadCloser) (string, error) {
-	buf := new(bytes.Buffer)
-	_, err := buf.ReadFrom(readCloser)
-	if err != nil {
-		log.Println("[ERROR] Unable to read the response body ", err)
-		return "", err
-	}
-
-	response := buf.String()
-	payload := strings.TrimLeft(response, "payload=")
-	unescapedPayload, err := url.QueryUnescape(payload)
-	if err != nil {
-		log.Println("[ERROR] Unable to unescape the response body ", err)
-		return "", err
-	}
-
-	return unescapedPayload, nil
 }
