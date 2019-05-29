@@ -65,7 +65,7 @@ You can register reviewers to review coding challenges. In order to do that:
 * Go to your Slack channel and type:
 
 ```
-  /challenge reviewer
+  /reviewer new
 ```
 
 * You will be presented by the below dialog:
