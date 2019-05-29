@@ -18,8 +18,8 @@ import (
 const dreadedPrivateRepoError = "422 Visibility can't be private"
 
 type dialogState struct {
-	channelID     string
-	challengeName string
+	channelID string
+	argument  string
 }
 
 func stateFromString(s string) (dialogState, error) {
@@ -29,13 +29,13 @@ func stateFromString(s string) (dialogState, error) {
 	}
 
 	return dialogState{
-		channelID:     x[0],
-		challengeName: x[1],
+		channelID: x[0],
+		argument:  x[1],
 	}, nil
 }
 
 func (d dialogState) string() string {
-	return fmt.Sprintf("%s,%s", d.channelID, d.challengeName)
+	return fmt.Sprintf("%s,%s", d.channelID, d.argument)
 }
 
 func HandleRequests(env config.Environment, readCloser io.ReadCloser) error {

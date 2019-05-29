@@ -59,7 +59,7 @@ func handleSendChallengeOptions(env config.Environment, icb slack.InteractionCal
 		if err != nil {
 			panic("Unknown error handling state")
 		}
-		js, err := getReviewerList(env, state.challengeName)
+		js, err := getReviewerList(env, state.argument)
 		if err != nil {
 			return nil, err
 		}

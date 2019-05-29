@@ -42,8 +42,8 @@ func executeNewReviewer(env config.Environment, c command) error {
 
 	// Create the dialog and send a message to open it
 	state := dialogState{
-		channelID:     s.ChannelID,
-		challengeName: c.arg,
+		channelID: s.ChannelID,
+		argument:  c.arg,
 	}
 	dialog := newAddReviewerDialog(s.TriggerID, state)
 
@@ -77,9 +77,10 @@ func executeSchedule(env config.Environment, c command) error {
 
 	// Create the dialog and send a message to open it
 	state := dialogState{
-		channelID:     s.ChannelID,
-		challengeName: c.arg,
+		channelID: s.ChannelID,
+		argument:  c.arg,
 	}
+
 	dialog := newScheduleDialog(s.TriggerID, state)
 
 	return showDialog(env, s.TeamID, s.TriggerID, dialog)
@@ -98,9 +99,9 @@ func newScheduleDialog(triggerID string, state dialogState) slack.Dialog {
 	}
 	return slack.Dialog{
 		TriggerID:      triggerID,
-		CallbackID:     "new_reviewer",
-		Title:          "Add Reviewer",
-		SubmitLabel:    "Add",
+		CallbackID:     "schedule_update",
+		Title:          "Update Schedule",
+		SubmitLabel:    "Update",
 		NotifyOnCancel: false,
 		State:          state.string(),
 		Elements:       elements,

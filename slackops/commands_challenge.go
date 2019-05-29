@@ -49,8 +49,8 @@ func executeSendChallenge(env config.Environment, c command) error {
 
 	// Create the dialog and send a message to open it
 	state := dialogState{
-		channelID:     s.ChannelID,
-		challengeName: c.arg,
+		channelID: s.ChannelID,
+		argument:  c.arg,
 	}
 	dialog := sendChallengeDialog(s.TriggerID, state)
 
@@ -62,8 +62,8 @@ func executeNewChallenge(env config.Environment, c command) error {
 
 	// Create the dialog and send a message to open it
 	state := dialogState{
-		channelID:     s.ChannelID,
-		challengeName: c.arg,
+		channelID: s.ChannelID,
+		argument:  c.arg,
 	}
 	dialog := newChallengeDialog(s.TriggerID, state)
 
@@ -75,8 +75,10 @@ func sendChallengeDialog(triggerID string, state dialogState) slack.Dialog {
 	githubNameElement := slack.NewTextInput("github_alias", "Github Alias", "")
 	resumeURLElement := slack.NewTextInput("resume_URL", "Resume URL", "")
 	challengeNameElement := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
-	reviewer1OptionsElement := newExternalOptionsDialogInput("reviewer1_id", "Reviewer 1", state.challengeName, false)
-	reviewer2OptionsElement := newExternalOptionsDialogInput("reviewer2_id", "Reviewer 2", state.challengeName, true)
+
+	challengeName := state.argument
+	reviewer1OptionsElement := newExternalOptionsDialogInput("reviewer1_id", "Reviewer 1", challengeName, false)
+	reviewer2OptionsElement := newExternalOptionsDialogInput("reviewer2_id", "Reviewer 2", challengeName, true)
 
 	elements := []slack.DialogElement{
 		candidateNameElement,
