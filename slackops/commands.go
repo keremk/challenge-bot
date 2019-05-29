@@ -49,6 +49,8 @@ func ExecuteCommand(env config.Environment, request *http.Request) error {
 			go executeReviewerHelp(c)
 		case "new":
 			go executeNewReviewer(env, c)
+		case "schedule":
+			go executeSchedule(env, c)
 		default:
 			log.Println("[ERROR] Unexpected Command ", c.mainCommand)
 			return errors.New("Unexpected command")
@@ -102,4 +104,17 @@ func parseSlashCommand(slashCommand *slack.SlashCommand) command {
 	default:
 		return helpCommand
 	}
+}
+
+func showDialog(env config.Environment, teamID, triggerID string, dialog slack.Dialog) error {
+	token, err := getBotToken(env, teamID)
+	if err != nil {
+		return err
+	}
+	slackClient := slack.New(token)
+	err = slackClient.OpenDialog(triggerID, dialog)
+	if err != nil {
+		log.Println("[ERROR] Cannot create the dialog ", err)
+	}
+	return err
 }
