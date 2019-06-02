@@ -100,18 +100,6 @@ func sendChallengeDialog(triggerID string, state dialogState) slack.Dialog {
 	}
 }
 
-func newExternalOptionsDialogInput(name, label, value string, optional bool) *slack.DialogInputSelect {
-	return &slack.DialogInputSelect{
-		DialogInput: slack.DialogInput{
-			Type:     slack.InputTypeSelect,
-			Name:     name,
-			Label:    label,
-			Optional: optional,
-		},
-		DataSource: slack.DialogDataSourceExternal,
-	}
-}
-
 func newChallengeDialog(triggerID string, state dialogState) slack.Dialog {
 	challengeNameEl := slack.NewTextInput("challenge_name", "Challenge Name", "")
 	templateRepoNameEl := slack.NewTextInput("template_repo", "Template Repo Name", "")

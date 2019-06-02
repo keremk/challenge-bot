@@ -2,12 +2,22 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/keremk/challenge-bot/config"
 	"github.com/keremk/challenge-bot/db"
 	"github.com/keremk/challenge-bot/util"
 )
+
+type Slot struct {
+	ID        string
+	Name      string
+	Day       string
+	StartTime string
+	EndTime   string
+}
 
 type Challenge struct {
 	ID                string
@@ -19,6 +29,7 @@ type Challenge struct {
 	TemplateRepo      string
 	RepoNameFormat    string
 	CreatedByTeamID   string
+	Slots             []Slot
 }
 
 func NewChallenge(input map[string]string) Challenge {
@@ -63,6 +74,30 @@ func UpdateChallenge(env config.Environment, challenge Challenge) error {
 	if err != nil {
 		return err
 	}
-
+	if challenge.Slots == nil || len(challenge.Slots) == 0 {
+		challenge.Slots = defaultSlots()
+	}
 	return store.Update(challenge.ID, challenge)
+}
+
+func defaultSlots() []Slot {
+	slots := make([]Slot, 0, 5)
+	for i := 0; i < 5; i++ {
+		day := time.Weekday(i + 1)
+		slots = append(slots, Slot{
+			ID:        fmt.Sprintf("%sMorning", day.String()),
+			Name:      fmt.Sprintf("%s Morning", day.String()),
+			Day:       day.String(),
+			StartTime: "9:00",
+			EndTime:   "11:00",
+		})
+		slots = append(slots, Slot{
+			ID:        fmt.Sprintf("%sAfternoon", day.String()),
+			Name:      fmt.Sprintf("%s Afternoon", day.String()),
+			Day:       day.String(),
+			StartTime: "16:30",
+			EndTime:   "18:30",
+		})
+	}
+	return slots
 }

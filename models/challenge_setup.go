@@ -14,6 +14,7 @@ type ChallengeSetup struct {
 	TemplateRepo    string
 	RepoNameFormat  string
 	CreatedByTeamID string
+	Slots           []Slot
 }
 
 func GetChallengeSetup(env config.Environment, name string) (ChallengeSetup, error) {
@@ -35,6 +36,7 @@ func GetChallengeSetup(env config.Environment, name string) (ChallengeSetup, err
 		TemplateRepo:    challenge.TemplateRepo,
 		RepoNameFormat:  challenge.RepoNameFormat,
 		CreatedByTeamID: challenge.CreatedByTeamID,
+		Slots:           challenge.Slots,
 	}, nil
 }
 

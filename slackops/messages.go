@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/keremk/challenge-bot/models"
+	"github.com/keremk/challenge-bot/scheduling"
 	"github.com/nlopes/slack"
 )
 
@@ -38,6 +40,42 @@ func newChallengeSummary(candidate models.Candidate, challengeURL string, tracki
 		fieldsSection,
 		footerSection,
 	)
+}
+
+func renderSchedule(weekNo, year int, reviewer models.Reviewer, slots []scheduling.SlotInfo) slack.ActionBlock {
+	// Schedule Action Blocks
+	blockEls := make([]slack.BlockElement, 0, len(slots))
+	for _, slot := range slots {
+		var buttonText string
+		if slot.IsSelected {
+			buttonText = fmt.Sprintf("\u2713 %s : %s - %s", slot.Slot.Day, slot.Slot.StartTime, slot.Slot.EndTime)
+		} else {
+			buttonText = fmt.Sprintf("\u2717 %s : %s - %s", slot.Slot.Day, slot.Slot.StartTime, slot.Slot.EndTime)
+		}
+		buttonTextBlock := slack.NewTextBlockObject("plain_text", buttonText, false, false)
+		encodedValue := strconv.FormatBool(slot.IsSelected)
+		encodedID := encodeScheduleActionInfo(scheduleActionInfo{
+			SlotID:     slot.Slot.ID,
+			ReviewerID: reviewer.SlackID,
+			WeekNo:     weekNo,
+			Year:       year,
+		})
+		blockEl := slack.NewButtonBlockElement(encodedID, encodedValue, buttonTextBlock)
+		blockEls = append(blockEls, blockEl)
+	}
+
+	slotsBlock := newActionBlock("interview_slots", blockEls)
+	return slotsBlock
+}
+
+func newActionBlock(blockID string, elements []slack.BlockElement) slack.ActionBlock {
+	return slack.ActionBlock{
+		Type:    slack.MBTAction,
+		BlockID: blockID,
+		Elements: slack.BlockElements{
+			ElementSet: elements,
+		},
+	}
 }
 
 func sendDelayedResponse(url string, json string) error {

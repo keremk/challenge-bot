@@ -118,3 +118,28 @@ func showDialog(env config.Environment, teamID, triggerID string, dialog slack.D
 	}
 	return err
 }
+
+func newExternalOptionsDialogInput(name, label, value string, optional bool) *slack.DialogInputSelect {
+	return &slack.DialogInputSelect{
+		DialogInput: slack.DialogInput{
+			Type:     slack.InputTypeSelect,
+			Name:     name,
+			Label:    label,
+			Optional: optional,
+		},
+		DataSource: slack.DialogDataSourceExternal,
+	}
+}
+
+func newStaticOptionsDialogInput(name, label string, optional bool, options []slack.DialogSelectOption) *slack.DialogInputSelect {
+	return &slack.DialogInputSelect{
+		DialogInput: slack.DialogInput{
+			Type:     slack.InputTypeSelect,
+			Name:     name,
+			Label:    label,
+			Optional: optional,
+		},
+		DataSource: slack.DialogDataSourceStatic,
+		Options:    options,
+	}
+}
