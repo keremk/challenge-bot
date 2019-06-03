@@ -79,64 +79,18 @@ func handleDialogSubmission(env config.Environment, icb slack.InteractionCallbac
 func handleBlockActions(env config.Environment, icb slack.InteractionCallback) error {
 	var err error
 
-	log.Println("STATE of message = ", icb.State)
-	log.Printf("Message Response URL %s", icb.ResponseURL)
-	log.Printf("Block actions %s", icb.ActionCallback.BlockActions)
-	log.Println(icb.Message.Blocks.BlockSet[0])
+	// log.Println("STATE of message = ", icb.State)
+	// log.Printf("Message Response URL %s", icb.ResponseURL)
+	// log.Printf("Block actions %s", icb.ActionCallback.BlockActions)
+	// log.Println(icb.Message.Blocks.BlockSet[0])
 
-	log.Printf("Action ID of first %s", icb.ActionCallback.BlockActions[0].ActionID)
-	log.Printf("Action Text of first %s", icb.ActionCallback.BlockActions[0].Text)
-	log.Printf("Action Value of first %s", icb.ActionCallback.BlockActions[0].Value)
-	log.Printf("Action Type of first %s", icb.ActionCallback.BlockActions[0].Type)
-	log.Printf("Action BlockID of first %s", icb.ActionCallback.BlockActions[0].BlockID)
-
-// 	respJSON := `
-// {
-// 	"replace_original": "true",
-// 	"blocks": [
-// 		{
-// 			"state": "1234",
-// 			"type": "actions",
-// 			"block_id": "interview_slots",
-// 			"elements": [
-// 				{
-// 					"type": "button",
-// 					"action_id": "MondayMorning",
-// 					"text": {
-// 						"type": "plain_text",
-// 						"text": "\u2713 Monday : 09:00 - 11:00",
-// 						"emoji": true
-// 					},
-// 					"value": "true"
-// 				},
-// 				{
-// 					"type": "button",
-// 					"action_id": "MondayAfternoon",
-// 					"text": {
-// 						"type": "plain_text",
-// 						"text": "\u2713 Monday : 09:00 - 11:00",
-// 						"emoji": true
-// 					},
-// 					"value": "true"
-// 				},
-// 				{
-// 					"type": "button",
-// 					"action_id": "TuesdayMorning",
-// 					"text": {
-// 						"type": "plain_text",
-// 						"text": "\u2713 Monday : 09:00 - 11:00",
-// 						"emoji": true
-// 					},
-// 					"value": "true"
-// 				}
-// 			]
-// 		}
-// 	]
-// }	
-// `
+	// log.Printf("Action ID of first %s", icb.ActionCallback.BlockActions[0].ActionID)
+	// log.Printf("Action Text of first %s", icb.ActionCallback.BlockActions[0].Text)
+	// log.Printf("Action Value of first %s", icb.ActionCallback.BlockActions[0].Value)
+	// log.Printf("Action Type of first %s", icb.ActionCallback.BlockActions[0].Type)
+	// log.Printf("Action BlockID of first %s", icb.ActionCallback.BlockActions[0].BlockID)
 
 	err = handleUpdateSchedule(env, icb)
-	// sendDelayedResponse(icb.ResponseURL, respJSON)
 	return err
 }
 

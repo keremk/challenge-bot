@@ -97,7 +97,6 @@ func executeSchedule(env config.Environment, c command) error {
 }
 
 func newScheduleDialog(triggerID string, state dialogState) slack.Dialog {
-	// allOrSelectWeekEl := newStaticOptionsDialogInput("all_or_select", "Entire Schedule or By Week", false, allOrSelectWeekOptions())
 	weekOfYearEl := newStaticOptionsDialogInput("year_week", "Week of the Year", true, weekOfYearOptions())
 
 	elements := []slack.DialogElement{
@@ -114,18 +113,6 @@ func newScheduleDialog(triggerID string, state dialogState) slack.Dialog {
 		Elements:       elements,
 	}
 }
-
-// func allOrSelectWeekOptions() []slack.DialogSelectOption {
-// 	options := []string{"All Weeks", "Select Week"}
-// 	selectOptions := make([]slack.DialogSelectOption, len(options))
-// 	for i, v := range options {
-// 		selectOptions[i] = slack.DialogSelectOption{
-// 			Label: v,
-// 			Value: v,
-// 		}
-// 	}
-// 	return selectOptions
-// }
 
 func weekOfYearOptions() []slack.DialogSelectOption {
 	week := firstDayOfWeek(time.Now())
