@@ -1,11 +1,11 @@
 package slackops
 
 import (
-	"fmt"
 	"regexp"
 	"time"
 
 	"github.com/keremk/challenge-bot/config"
+	"github.com/keremk/challenge-bot/scheduling"
 	"github.com/nlopes/slack"
 )
 
@@ -97,7 +97,7 @@ func executeSchedule(env config.Environment, c command) error {
 }
 
 func newScheduleDialog(triggerID string, state dialogState) slack.Dialog {
-	weekOfYearEl := newStaticOptionsDialogInput("year_week", "Week of the Year", true, weekOfYearOptions())
+	weekOfYearEl := newStaticOptionsDialogInput("year_week", "Week of the Year", true, weekOfYearOptions(true))
 
 	elements := []slack.DialogElement{
 		// allOrSelectWeekEl,
@@ -114,45 +114,40 @@ func newScheduleDialog(triggerID string, state dialogState) slack.Dialog {
 	}
 }
 
-func weekOfYearOptions() []slack.DialogSelectOption {
-	week := firstDayOfWeek(time.Now())
+func weekOfYearOptions(includeAllWeeks bool) []slack.DialogSelectOption {
+	week := scheduling.FirstDayOfWeek(time.Now())
 	year, weekNo := week.ISOWeek()
-	selectOptions := make([]slack.DialogSelectOption, 25)
+	selectOptions := make([]slack.DialogSelectOption, 0, 25)
 
-	selectOptions[0] = slack.DialogSelectOption{
-		Label: "All Weeks",
-		Value: encodeWeekAndYear(0, year),
+	if includeAllWeeks {
+		selectOptions = append(selectOptions, slack.DialogSelectOption{
+			Label: "All Weeks",
+			Value: encodeWeekAndYear(0, year),
+		})
 	}
 	for i := 0; i < 24; i++ {
-		beginWeekMonth := week.Month().String()
-		beginWeekDay := week.Day()
-		endWeek := week.AddDate(0, 0, 4)
-		endWeekMonth := endWeek.Month().String()
-		endWeekDay := endWeek.Day()
-		weekLabel := fmt.Sprintf("Week %d : %s %d - %s %d", weekNo, beginWeekMonth, beginWeekDay, endWeekMonth, endWeekDay)
-		selectOptions[i+1] = slack.DialogSelectOption{
+		weekLabel := scheduling.WeekDescription(week)
+		selectOptions = append(selectOptions, slack.DialogSelectOption{
 			Label: weekLabel,
 			Value: encodeWeekAndYear(weekNo, year),
-		}
+		})
 		week = week.AddDate(0, 0, 7)
 		year, weekNo = week.ISOWeek()
 	}
 	return selectOptions
 }
 
-func firstDayOfWeek(day time.Time) time.Time {
-	var firstDay time.Time
-	weekDay := int(day.Weekday())
-	if weekDay == 0 {
-		// Sunday -> Add one more day
-		firstDay = day.AddDate(0, 0, 1)
-	} else if weekDay == 1 {
-		firstDay = day
-	} else {
-		firstDay = day.AddDate(0, 0, -(weekDay - 1))
-	}
+func dayOptions() []slack.DialogSelectOption {
+	daysOfWeek := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"}
 
-	return firstDay
+	selectOptions := make([]slack.DialogSelectOption, 0, 5)
+	for _, day := range daysOfWeek {
+		selectOptions = append(selectOptions, slack.DialogSelectOption{
+			Label: day,
+			Value: day,
+		})
+	}
+	return selectOptions
 }
 
 func parseSlackIDFromString(combinedID string) string {
@@ -161,4 +156,46 @@ func parseSlackIDFromString(combinedID string) string {
 	re := regexp.MustCompile(match)
 
 	return re.FindString(combinedID)
+}
+
+func executeFindReviewers(env config.Environment, c command) error {
+	s := c.slashCommand
+
+	var reviewer string
+	if c.arg == "" {
+		reviewer = s.UserID
+	} else {
+		reviewer = parseSlackIDFromString(c.arg)
+	}
+	// Create the dialog and send a message to open it
+	state := dialogState{
+		channelID: s.ChannelID,
+		argument:  reviewer,
+	}
+
+	dialog := newFindDialog(s.TriggerID, state)
+
+	return showDialog(env, s.TeamID, s.TriggerID, dialog)
+}
+
+func newFindDialog(triggerID string, state dialogState) slack.Dialog {
+	weekOfYearEl := newStaticOptionsDialogInput("year_week", "Week of the Year", true, weekOfYearOptions(false))
+	dayEl := newStaticOptionsDialogInput("day", "Day of Week", true, dayOptions())
+	challengeNameEl := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
+	technologyEl := slack.NewTextInput("technology", "Technology List", "")
+	elements := []slack.DialogElement{
+		weekOfYearEl,
+		dayEl,
+		challengeNameEl,
+		technologyEl,
+	}
+	return slack.Dialog{
+		TriggerID:      triggerID,
+		CallbackID:     "find_reviewers",
+		Title:          "Find Reviewers",
+		SubmitLabel:    "Search",
+		NotifyOnCancel: false,
+		State:          state.string(),
+		Elements:       elements,
+	}
 }

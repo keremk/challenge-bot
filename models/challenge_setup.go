@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/keremk/challenge-bot/config"
 )
@@ -14,7 +15,7 @@ type ChallengeSetup struct {
 	TemplateRepo    string
 	RepoNameFormat  string
 	CreatedByTeamID string
-	Slots           []Slot
+	Slots           map[SlotID]*Slot
 }
 
 func GetChallengeSetup(env config.Environment, name string) (ChallengeSetup, error) {
@@ -54,4 +55,15 @@ func (s ChallengeSetup) TemplateRepositoryURL() string {
 
 func (s ChallengeSetup) TrackingIssuesURL() string {
 	return fmt.Sprintf("https://github.com/%v/%v/issues", s.OrgOrOwner(), s.TemplateRepo)
+}
+
+func (s ChallengeSetup) GetSlotsInOrder() []*Slot {
+	slots := make([]*Slot, 0, len(s.Slots))
+	for _, slot := range s.Slots {
+		slots = append(slots, slot)
+	}
+
+	sort.Slice(slots, func(i, j int) bool { return slots[i].Ordinal < slots[j].Ordinal })
+
+	return slots
 }

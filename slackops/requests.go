@@ -48,7 +48,7 @@ func HandleRequests(env config.Environment, readCloser io.ReadCloser) error {
 	case "dialog_submission":
 		err = handleDialogSubmission(env, icb)
 	case "block_actions":
-		err = handleBlockActions(env, icb)
+		err = handleBlockActions(env, icb, readCloser)
 	default:
 		err = errors.New("[ERROR] Unknown dialog response")
 		log.Println("[ERROR] Unknown dialog response - ", icb.CallbackID)
@@ -69,28 +69,41 @@ func handleDialogSubmission(env config.Environment, icb slack.InteractionCallbac
 		err = handleNewReviewer(env, icb)
 	case "schedule_update":
 		err = handleShowSchedule(env, icb)
+	case "find_reviewers":
+		err = handleFindReviewers(env, icb)
 	default:
-		err = errors.New("[ERROR] Unknown dialog response")
-		log.Println("[ERROR] Unknown dialog response - ", icb.CallbackID)
+		err = errors.New("[ERROR] Unknown CallbackID")
+		log.Println("[ERROR] Unknown CallbackID - ", icb.CallbackID)
 	}
 	return err
 }
 
-func handleBlockActions(env config.Environment, icb slack.InteractionCallback) error {
+func handleBlockActions(env config.Environment, icb slack.InteractionCallback, readCloser io.ReadCloser) error {
 	var err error
 
-	// log.Println("STATE of message = ", icb.State)
-	// log.Printf("Message Response URL %s", icb.ResponseURL)
-	// log.Printf("Block actions %s", icb.ActionCallback.BlockActions)
-	// log.Println(icb.Message.Blocks.BlockSet[0])
+	log.Println("State of message = ", icb.State)
+	log.Printf("Message Response URL %s", icb.ResponseURL)
+	log.Printf("Block actions %s", icb.ActionCallback.BlockActions)
+	log.Printf("Action ID of first %s", icb.ActionCallback.BlockActions[0].ActionID)
+	log.Printf("Action Text of first %s", icb.ActionCallback.BlockActions[0].Text)
+	log.Printf("Action Value of first %s", icb.ActionCallback.BlockActions[0].Value)
+	log.Printf("Action Type of first %s", icb.ActionCallback.BlockActions[0].Type)
+	log.Printf("Action BlockID of first %s", icb.ActionCallback.BlockActions[0].BlockID)
 
-	// log.Printf("Action ID of first %s", icb.ActionCallback.BlockActions[0].ActionID)
-	// log.Printf("Action Text of first %s", icb.ActionCallback.BlockActions[0].Text)
-	// log.Printf("Action Value of first %s", icb.ActionCallback.BlockActions[0].Value)
-	// log.Printf("Action Type of first %s", icb.ActionCallback.BlockActions[0].Type)
-	// log.Printf("Action BlockID of first %s", icb.ActionCallback.BlockActions[0].BlockID)
-
-	err = handleUpdateSchedule(env, icb)
+	action, encodedActionInfo, err := decodeAction(icb.ActionCallback.BlockActions[0].ActionID)
+	log.Printf("Action %s, Encoded ActionInfo %s", action, encodedActionInfo)
+	if err != nil {
+		return err
+	}
+	switch action {
+	case scheduleUpdate:
+		err = handleUpdateSchedule(env, icb, encodedActionInfo)
+	case findReviewers:
+		err = handleBookings(env, icb, encodedActionInfo)
+	default:
+		err = errors.New("[ERROR] Unknown action")
+		log.Println("[ERROR] Unknown action - ", action)
+	}
 	return err
 }
 

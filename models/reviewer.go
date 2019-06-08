@@ -10,6 +10,12 @@ import (
 	"github.com/keremk/challenge-bot/util"
 )
 
+type SlotBooking struct {
+	SlotID   string
+	WeekNo   int
+	Year     int
+	IsBooked bool
+}
 type SlotReference struct {
 	SlotID    string
 	WeekNo    int
@@ -25,28 +31,21 @@ type Reviewer struct {
 	TechnologyList string
 	ChallengeName  string
 	Availability   map[string][]string
+	Bookings       map[string][]string
 }
 
 func NewReviewer(name string, input map[string]string) Reviewer {
+	id := fmt.Sprintf("%s-%s", name, util.RandomString(8))
 	return Reviewer{
-		ID:             util.RandomString(16),
+		ID:             id,
 		Name:           name,
 		GithubAlias:    input["github_alias"],
 		SlackID:        input["reviewer_id"],
 		TechnologyList: input["technology_list"],
 		ChallengeName:  input["challenge_name"],
+		Availability:   make(map[string][]string),
+		Bookings:       make(map[string][]string),
 	}
-}
-
-func GetReviewer(env config.Environment, id string) (Reviewer, error) {
-	reviewer := Reviewer{}
-	store, err := db.NewStore(env, db.ReviewersCollection)
-	if err != nil {
-		return reviewer, err
-	}
-
-	err = store.FindByID(id, &reviewer)
-	return reviewer, err
 }
 
 func GetReviewerBySlackID(env config.Environment, slackID string) (Reviewer, error) {
@@ -90,6 +89,35 @@ func GetAllReviewersForChallenge(env config.Environment, challengeName string) (
 	return all, err
 }
 
+func GetAvailableSlots(reviewer Reviewer, weekNo, year int) []SlotBooking {
+	slotIndex := SlotIndex(weekNo, year)
+	availableSlots := reviewer.Availability[slotIndex]
+	if availableSlots == nil {
+		availableSlots = reviewer.Availability["General"]
+	}
+
+	bookedSlots := reviewer.Bookings[slotIndex]
+
+	var slotBookings = make([]SlotBooking, 0, len(availableSlots))
+	for _, slotID := range availableSlots {
+		isBooked := false
+		for _, bookedID := range bookedSlots {
+			if bookedID == slotID {
+				isBooked = true
+				break
+			}
+		}
+		slotBookings = append(slotBookings, SlotBooking{
+			SlotID:   slotID,
+			WeekNo:   weekNo,
+			Year:     year,
+			IsBooked: isBooked,
+		})
+	}
+
+	return slotBookings
+}
+
 func UpdateReviewer(env config.Environment, reviewer Reviewer) error {
 	store, err := db.NewStore(env, db.ReviewersCollection)
 	if err != nil {
@@ -100,10 +128,8 @@ func UpdateReviewer(env config.Environment, reviewer Reviewer) error {
 
 func UpdateReviewerAvailability(env config.Environment, reviewer Reviewer, ref SlotReference) (Reviewer, error) {
 	slotIndex := SlotIndex(ref.WeekNo, ref.Year)
-	slots := reviewer.Availability[slotIndex]
-	if slots == nil {
-		slots = reviewer.Availability["General"]
-	}
+	slots := initializeSlots(slotIndex, reviewer)
+
 	var newSlots []string
 	if ref.Available {
 		newSlots = addSlot(slots, ref.SlotID)
@@ -112,6 +138,47 @@ func UpdateReviewerAvailability(env config.Environment, reviewer Reviewer, ref S
 	}
 
 	reviewer.Availability[slotIndex] = newSlots
+	err := UpdateReviewer(env, reviewer)
+
+	return reviewer, err
+}
+
+func initializeSlots(slotIndex string, reviewer Reviewer) []string {
+	var slots []string
+	if slotIndex == "General" {
+		// Get General or if not create empty
+		slots = reviewer.Availability[slotIndex]
+		if slots == nil {
+			slots = make([]string, 0, 50)
+		}
+	} else {
+		// Get the slot if not copy General or if general does not exist init with zero
+		slots = reviewer.Availability[slotIndex]
+		if slots == nil {
+			slots = reviewer.Availability["General"]
+			if slots == nil {
+				slots = make([]string, 0, 50)
+			}
+		}
+	}
+
+	return slots
+}
+
+func UpdateReviewerBooking(env config.Environment, reviewer Reviewer, ref SlotBooking) (Reviewer, error) {
+	slotIndex := SlotIndex(ref.WeekNo, ref.Year)
+	slots := reviewer.Bookings[slotIndex]
+	if slots == nil {
+		slots = make([]string, 0, 20)
+	}
+	var newSlots []string
+	if ref.IsBooked {
+		newSlots = addSlot(slots, ref.SlotID)
+	} else {
+		newSlots = removeSlot(slots, ref.SlotID)
+	}
+
+	reviewer.Bookings[slotIndex] = newSlots
 	err := UpdateReviewer(env, reviewer)
 
 	return reviewer, err

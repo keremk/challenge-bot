@@ -93,8 +93,8 @@ type updateMsg struct {
 	Blocks          []slack.ActionBlock `json:"blocks,omitempty"`
 }
 
-func handleUpdateSchedule(env config.Environment, icb slack.InteractionCallback) error {
-	scheduleInfo, err := decodeScheduleActionInfo(icb.ActionCallback.BlockActions[0].ActionID)
+func handleUpdateSchedule(env config.Environment, icb slack.InteractionCallback, encodedActionInfo string) error {
+	scheduleInfo, err := decodeScheduleActionInfo(encodedActionInfo)
 	if err != nil {
 		log.Println("[ERROR] Cannot decode schedule info - ", err)
 		return err
@@ -157,4 +157,86 @@ func updateSchedule(env config.Environment, teamID, channelID, responseURL strin
 	// log.Println(string(respJSON))
 
 	sendDelayedResponse(responseURL, string(respJSON))
+}
+
+func handleFindReviewers(env config.Environment, icb slack.InteractionCallback) error {
+	scheduleInput := icb.Submission
+	log.Println("[INFO] Reviewer data", scheduleInput)
+
+	week, year := decodeWeekAndYear(scheduleInput["year_week"])
+	day := scheduleInput["day"]
+	log.Println("[INFO] Day ", day)
+	log.Println("[INFO] Week ", week)
+
+	challengeName := scheduleInput["challenge_name"]
+	technology := scheduleInput["technology"]
+
+	go findAvailableReviewers(env, challengeName, technology, day, week, year, icb.Team.ID, icb.Channel.ID)
+
+	return nil
+}
+
+func findAvailableReviewers(env config.Environment, challengeName, technology, day string, week, year int, teamID, channelID string) {
+	availableReviewers, err := scheduling.FindAvailableReviewers(env, challengeName, technology, week, year)
+	if err != nil {
+		log.Println("[ERROR] Found no results", err)
+	}
+
+	scheduleInfo := availableReviewers[day]
+	if scheduleInfo == nil {
+		errorMsg := fmt.Sprintf("No reviewers available for %s on the week of %d, %d", day, week, year)
+		postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+	}
+	scheduleMsg := renderReviewers(week, year, scheduleInfo)
+
+	postMessage(env, teamID, channelID, scheduleMsg)
+}
+
+func handleBookings(env config.Environment, icb slack.InteractionCallback, encodedActionInfo string) error {
+	scheduleInfo, err := decodeScheduleActionInfo(encodedActionInfo)
+	if err != nil {
+		log.Println("[ERROR] Cannot decode schedule info - ", err)
+		return err
+	}
+
+	isBooked, err := strconv.ParseBool(icb.ActionCallback.BlockActions[0].Value)
+	if err != nil {
+		log.Println("[ERROR] value not properly encoded ", err)
+		return err
+	}
+
+	updateBooking(env, icb.Team.ID, icb.Channel.ID, icb.ResponseURL, isBooked, scheduleInfo)
+	return nil
+}
+
+func updateBooking(env config.Environment, teamID, channelID, responseURL string, isBooked bool, scheduleInfo scheduleActionInfo) {
+	reviewer, err := models.GetReviewerBySlackID(env, scheduleInfo.ReviewerID)
+	if err != nil {
+		log.Println("[ERROR] No such reviewer registered.", err)
+		errorMsg := fmt.Sprintf("Reviewer <%s> is not registered.", scheduleInfo.ReviewerID)
+		postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+	}
+	log.Println("[INFO] Reviewer is - ", reviewer)
+
+	isBooked = !isBooked
+
+	reviewer, err = models.UpdateReviewerBooking(env, reviewer, models.SlotBooking{
+		SlotID:   scheduleInfo.SlotID,
+		WeekNo:   scheduleInfo.WeekNo,
+		Year:     scheduleInfo.Year,
+		IsBooked: isBooked,
+	})
+	if err != nil {
+		log.Println("[ERROR] Update booking not successful - ", err)
+		errorMsg := fmt.Sprintf("There was an error. Booking cannot be updated.")
+		postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+	}
+
+	var msg string
+	if isBooked {
+		msg = fmt.Sprintf("<@%s|%s> is now booked for the slot %s on week %d", reviewer.SlackID, reviewer.Name, scheduleInfo.SlotID, scheduleInfo.WeekNo)
+	} else {
+		msg = fmt.Sprintf("<@%s|%s> is now free for the slot %s on week %d", reviewer.SlackID, reviewer.Name, scheduleInfo.SlotID, scheduleInfo.WeekNo)
+	}
+	postMessage(env, teamID, channelID, toMsgOption(msg))
 }

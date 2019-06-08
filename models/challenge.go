@@ -11,8 +11,11 @@ import (
 	"github.com/keremk/challenge-bot/util"
 )
 
+type SlotID = string
+
 type Slot struct {
 	ID        string
+	Ordinal   int
 	Name      string
 	Day       string
 	StartTime string
@@ -22,14 +25,11 @@ type Slot struct {
 type Challenge struct {
 	ID                string
 	Name              string
-	GithubOwner       string
-	GithubOrg         string
 	GithubAccountName string
-	GithubToken       string
 	TemplateRepo      string
 	RepoNameFormat    string
 	CreatedByTeamID   string
-	Slots             []Slot
+	Slots             map[SlotID]*Slot
 }
 
 func NewChallenge(input map[string]string) Challenge {
@@ -80,24 +80,32 @@ func UpdateChallenge(env config.Environment, challenge Challenge) error {
 	return store.Update(challenge.ID, challenge)
 }
 
-func defaultSlots() []Slot {
-	slots := make([]Slot, 0, 5)
+func defaultSlots() map[SlotID]*Slot {
+	slots := make(map[SlotID]*Slot)
+	ordinal := 0
 	for i := 0; i < 5; i++ {
 		day := time.Weekday(i + 1)
-		slots = append(slots, Slot{
-			ID:        fmt.Sprintf("%sMorning", day.String()),
+		slotID := fmt.Sprintf("%sMorning", day.String())
+		slots[slotID] = &Slot{
+			ID:        slotID,
+			Ordinal:   ordinal,
 			Name:      fmt.Sprintf("%s Morning", day.String()),
 			Day:       day.String(),
 			StartTime: "9:00",
 			EndTime:   "11:00",
-		})
-		slots = append(slots, Slot{
-			ID:        fmt.Sprintf("%sAfternoon", day.String()),
+		}
+
+		slotID = fmt.Sprintf("%sAfternoon", day.String())
+		ordinal++
+		slots[slotID] = &Slot{
+			ID:        slotID,
+			Ordinal:   ordinal,
 			Name:      fmt.Sprintf("%s Afternoon", day.String()),
 			Day:       day.String(),
 			StartTime: "16:30",
 			EndTime:   "18:30",
-		})
+		}
+		ordinal++
 	}
 	return slots
 }

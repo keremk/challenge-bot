@@ -38,6 +38,26 @@ type scheduleActionInfo struct {
 	Year       int
 }
 
+type actionType = string
+
+const (
+	scheduleUpdate actionType = "schedule_update"
+	findReviewers  actionType = "find_reviewers"
+)
+
+func encodeAction(action actionType, input string) string {
+	return fmt.Sprintf("%s&%s", action, input)
+}
+
+func decodeAction(input string) (actionType, string, error) {
+	s := strings.Split(input, "&")
+	if len(s) < 2 {
+		return "", "", errors.New("[ERROR] Encoding for action is not correct")
+	}
+
+	return s[0], s[1], nil
+}
+
 func encodeScheduleActionInfo(input scheduleActionInfo) string {
 	return fmt.Sprintf("%s-%s-%d-%d", input.SlotID, input.ReviewerID, input.WeekNo, input.Year)
 }
@@ -64,4 +84,16 @@ func decodeScheduleActionInfo(actionID string) (scheduleActionInfo, error) {
 		WeekNo:     weekNo,
 		Year:       year,
 	}, nil
+}
+
+func encodeDay(dayNo int) string {
+	return strconv.Itoa(dayNo)
+}
+
+func decodeDay(input string) (int, error) {
+	day, err := strconv.Atoi(input)
+	if err != nil {
+		log.Println("[ERROR] Incorrect day encoding - ", input)
+	}
+	return day, err
 }

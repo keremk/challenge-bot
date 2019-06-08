@@ -77,7 +77,7 @@ func sendChallengeDialog(triggerID string, state dialogState) slack.Dialog {
 	challengeNameElement := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
 
 	challengeName := state.argument
-	reviewer1OptionsElement := newExternalOptionsDialogInput("reviewer1_id", "Reviewer 1", challengeName, false)
+	reviewer1OptionsElement := newExternalOptionsDialogInput("reviewer1_id", "Reviewer 1", challengeName, true)
 	reviewer2OptionsElement := newExternalOptionsDialogInput("reviewer2_id", "Reviewer 2", challengeName, true)
 
 	elements := []slack.DialogElement{

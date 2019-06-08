@@ -49,15 +49,15 @@ func parseSendDialogInput(env config.Environment, input map[string]string) (mode
 	return candidate, reviewers, nil
 }
 
-func resolveReviewer(env config.Environment, reviewerID string) (models.Reviewer, error) {
-	if reviewerID == "" {
+func resolveReviewer(env config.Environment, reviewerSlackID string) (models.Reviewer, error) {
+	if reviewerSlackID == "" {
 		log.Printf("[ERROR] Reviewer not specified")
 		return models.Reviewer{}, errors.New("[ERROR] Reviewer not specified")
 	}
 
-	reviewer, err := models.GetReviewer(env, reviewerID)
+	reviewer, err := models.GetReviewerBySlackID(env, reviewerSlackID)
 	if err != nil {
-		log.Printf("[ERROR] Reviewer ID %s not found in database", reviewerID)
+		log.Printf("[ERROR] Reviewer ID %s not found in database", reviewerSlackID)
 		return reviewer, err
 	}
 
@@ -105,23 +105,26 @@ func sendChallenge(env config.Environment, challenge models.ChallengeSetup, cand
 func handleNewChallenge(env config.Environment, icb slack.InteractionCallback) error {
 	challengeInput := icb.Submission
 	challengeInput["team_id"] = icb.Team.ID
-	challenge := models.NewChallenge(icb.Submission)
+
+	go createNewChallenge(env, icb.Submission, icb.Team.ID, icb.Channel.ID)
+	return nil
+}
+
+func createNewChallenge(env config.Environment, params map[string]string, teamID, channelID string) {
+	challenge := models.NewChallenge(params)
 	err := models.UpdateChallenge(env, challenge)
 	if err != nil {
 		log.Println("[ERROR] Could not update challenge in db ", err)
-		_ = postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption("We were not able to create the new challenge"))
-		return err
+		postMessage(env, teamID, channelID, toMsgOption("We were not able to create the new challenge"))
 	}
 
 	challengeSetup, err := models.GetChallengeSetup(env, challenge.Name)
 	if err != nil {
 		log.Println("[ERROR] Could not create a valid challenge setup, perhaps the github repo name is not valid ", err)
-		_ = postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption("We were not able to create a valid challenge"))
-		return err
+		postMessage(env, teamID, channelID, toMsgOption("We were not able to create a valid challenge"))
 	}
 	msgText := fmt.Sprintf("We created a challenge named %s in our database. It is pointing to: %s", challengeSetup.Name, challengeSetup.TemplateRepositoryURL())
-	_ = postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption(msgText))
-	return nil
+	postMessage(env, teamID, channelID, toMsgOption(msgText))
 }
 
 func getUserInfo(env config.Environment, id, teamID string) (slack.User, error) {

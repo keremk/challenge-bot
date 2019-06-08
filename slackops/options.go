@@ -37,9 +37,12 @@ func HandleOptions(env config.Environment, readCloser io.ReadCloser) ([]byte, er
 	case "new_reviewer":
 		respJSON, err := handleNewReviewerOptions(env, icb)
 		return respJSON, err
+	case "find_reviewers":
+		respJSON, err := handleNewReviewerOptions(env, icb)
+		return respJSON, err
 	default:
-		err = errors.New("[ERROR] Unknown dialog response")
-		log.Println("[ERROR] Unknown dialog response")
+		err = errors.New("[ERROR] Unknown Callback ID for options")
+		log.Println("[ERROR] Unknown Callback ID for options - ", icb.CallbackID)
 	}
 	return nil, err
 }
@@ -108,7 +111,7 @@ func getReviewerList(env config.Environment, challengeName string) ([]byte, erro
 	for _, reviewer := range reviewerList {
 		optionList = append(optionList, option{
 			Label: reviewer.Name,
-			Value: reviewer.ID,
+			Value: reviewer.SlackID,
 		})
 	}
 
