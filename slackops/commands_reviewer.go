@@ -53,30 +53,6 @@ func executeNewReviewer(env config.Environment, c command) error {
 	return showDialog(env, s.TeamID, s.TriggerID, dialog)
 }
 
-func newAddReviewerDialog(triggerID string) slack.Dialog {
-	reviewerEl := slack.NewUsersSelect("reviewer_id", "Reviewer")
-	githubNameEl := slack.NewTextInput("github_alias", "Github Alias", "")
-	challengeNameEl := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
-	technologyListEl := slack.NewTextInput("technology_list", "Technology List", "")
-	experienceLevelEl := newStaticOptionsDialogInput("experience", "Experience Level", "", true, experienceOptions())
-	elements := []slack.DialogElement{
-		reviewerEl,
-		githubNameEl,
-		challengeNameEl,
-		technologyListEl,
-		experienceLevelEl,
-	}
-	return slack.Dialog{
-		TriggerID:      triggerID,
-		CallbackID:     "new_reviewer",
-		Title:          "Add Reviewer",
-		SubmitLabel:    "Add",
-		NotifyOnCancel: false,
-		State:          "",
-		Elements:       elements,
-	}
-}
-
 func executeEditReviewer(env config.Environment, c command) error {
 	s := c.slashCommand
 
@@ -99,18 +75,19 @@ func executeEditReviewer(env config.Environment, c command) error {
 	return showDialog(env, s.TeamID, s.TriggerID, dialog)
 }
 
-func newEditReviewerDialog(triggerID string, reviewer models.Reviewer) slack.Dialog {
-	githubNameEl := slack.NewTextInput("github_alias", "Github Alias", reviewer.GithubAlias)
-	challengeNameEl := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
-	technologyListEl := slack.NewTextInput("technology_list", "Technology List", reviewer.TechnologyList)
-	experienceLevel := strconv.Itoa(reviewer.Experience)
-	experienceLevelEl := newStaticOptionsDialogInput("experience", "Experience Level", experienceLevel, true, experienceOptions())
-	elements := []slack.DialogElement{
-		githubNameEl,
-		challengeNameEl,
-		technologyListEl,
-		experienceLevelEl,
+func newAddReviewerDialog(triggerID string) slack.Dialog {
+	return slack.Dialog{
+		TriggerID:      triggerID,
+		CallbackID:     "new_reviewer",
+		Title:          "Add Reviewer",
+		SubmitLabel:    "Add",
+		NotifyOnCancel: false,
+		State:          "",
+		Elements:       reviewerDialogElements(models.Reviewer{}, false),
 	}
+}
+
+func newEditReviewerDialog(triggerID string, reviewer models.Reviewer) slack.Dialog {
 	return slack.Dialog{
 		TriggerID:      triggerID,
 		CallbackID:     "edit_reviewer",
@@ -118,8 +95,29 @@ func newEditReviewerDialog(triggerID string, reviewer models.Reviewer) slack.Dia
 		SubmitLabel:    "Edit",
 		NotifyOnCancel: false,
 		State:          reviewer.SlackID,
-		Elements:       elements,
+		Elements:       reviewerDialogElements(reviewer, true),
 	}
+}
+
+func reviewerDialogElements(reviewer models.Reviewer, editMode bool) []slack.DialogElement {
+	elements := make([]slack.DialogElement, 0, 10)
+	if !editMode {
+		reviewerEl := slack.NewUsersSelect("reviewer_id", "Reviewer")
+		elements = append(elements, reviewerEl)
+	}
+
+	githubNameEl := slack.NewTextInput("github_alias", "Github Alias", reviewer.GithubAlias)
+	challengeNameEl := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
+	technologyListEl := slack.NewTextInput("technology_list", "Technology List", reviewer.TechnologyList)
+	experienceLevel := strconv.Itoa(reviewer.Experience)
+	experienceLevelEl := newStaticOptionsDialogInput("experience", "Experience Level", experienceLevel, true, experienceOptions())
+
+	return append(elements,
+		githubNameEl,
+		challengeNameEl,
+		technologyListEl,
+		experienceLevelEl,
+	)
 }
 
 func executeSchedule(env config.Environment, c command) error {
