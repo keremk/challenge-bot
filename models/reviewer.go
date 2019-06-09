@@ -12,19 +12,6 @@ import (
 	"github.com/keremk/challenge-bot/util"
 )
 
-type SlotBooking struct {
-	SlotID   string
-	WeekNo   int
-	Year     int
-	IsBooked bool
-}
-type SlotReference struct {
-	SlotID    string
-	WeekNo    int
-	Year      int
-	Available bool
-}
-
 type Reviewer struct {
 	ID             string
 	Name           string
@@ -98,129 +85,10 @@ func GetAllReviewersForChallenge(env config.Environment, challengeName string) (
 	return all, err
 }
 
-func GetAvailableSlots(reviewer Reviewer, weekNo, year int) []SlotBooking {
-	slotIndex := SlotIndex(weekNo, year)
-	availableSlots := reviewer.Availability[slotIndex]
-	if availableSlots == nil {
-		availableSlots = reviewer.Availability["General"]
-	}
-
-	bookedSlots := reviewer.Bookings[slotIndex]
-
-	var slotBookings = make([]SlotBooking, 0, len(availableSlots))
-	for _, slotID := range availableSlots {
-		isBooked := false
-		for _, bookedID := range bookedSlots {
-			if bookedID == slotID {
-				isBooked = true
-				break
-			}
-		}
-		slotBookings = append(slotBookings, SlotBooking{
-			SlotID:   slotID,
-			WeekNo:   weekNo,
-			Year:     year,
-			IsBooked: isBooked,
-		})
-	}
-
-	return slotBookings
-}
-
 func UpdateReviewer(env config.Environment, reviewer Reviewer) error {
 	store, err := db.NewStore(env, db.ReviewersCollection)
 	if err != nil {
 		return err
 	}
 	return store.Update(reviewer.ID, reviewer)
-}
-
-func UpdateReviewerAvailability(env config.Environment, reviewer Reviewer, ref SlotReference) (Reviewer, error) {
-	slotIndex := SlotIndex(ref.WeekNo, ref.Year)
-	slots := initializeSlots(slotIndex, reviewer)
-
-	var newSlots []string
-	if ref.Available {
-		newSlots = addSlot(slots, ref.SlotID)
-	} else {
-		newSlots = removeSlot(slots, ref.SlotID)
-	}
-
-	reviewer.Availability[slotIndex] = newSlots
-	err := UpdateReviewer(env, reviewer)
-
-	return reviewer, err
-}
-
-func initializeSlots(slotIndex string, reviewer Reviewer) []string {
-	var slots []string
-	if slotIndex == "General" {
-		// Get General or if not create empty
-		slots = reviewer.Availability[slotIndex]
-		if slots == nil {
-			slots = make([]string, 0, 50)
-		}
-	} else {
-		// Get the slot if not copy General or if general does not exist init with zero
-		slots = reviewer.Availability[slotIndex]
-		if slots == nil {
-			slots = reviewer.Availability["General"]
-			if slots == nil {
-				slots = make([]string, 0, 50)
-			}
-		}
-	}
-
-	return slots
-}
-
-func UpdateReviewerBooking(env config.Environment, reviewer Reviewer, ref SlotBooking) (Reviewer, error) {
-	slotIndex := SlotIndex(ref.WeekNo, ref.Year)
-	slots := reviewer.Bookings[slotIndex]
-	if slots == nil {
-		slots = make([]string, 0, 20)
-	}
-	var newSlots []string
-	if ref.IsBooked {
-		newSlots = addSlot(slots, ref.SlotID)
-	} else {
-		newSlots = removeSlot(slots, ref.SlotID)
-	}
-
-	reviewer.Bookings[slotIndex] = newSlots
-	err := UpdateReviewer(env, reviewer)
-
-	return reviewer, err
-}
-
-func addSlot(slots []string, newSlot string) []string {
-	for _, slot := range slots {
-		if slot == newSlot {
-			return slots
-		}
-	}
-	return append(slots, newSlot)
-}
-
-func removeSlot(slots []string, oldSlot string) []string {
-	newSlots := make([]string, 0, len(slots))
-	for _, slot := range slots {
-		if slot != oldSlot {
-			newSlots = append(newSlots, slot)
-		}
-	}
-	return newSlots
-}
-
-func SlotIndex(week, year int) string {
-	var slotIndex string
-	if week == 0 {
-		// Return all weeks (general) setup
-		slotIndex = "General"
-	} else {
-		// Return the specific week info
-		slotIndex = fmt.Sprintf("%d-%d", week, year)
-	}
-
-	return slotIndex
 }

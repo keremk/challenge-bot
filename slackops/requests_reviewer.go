@@ -58,8 +58,8 @@ func handleShowSchedule(env config.Environment, icb slack.InteractionCallback) e
 
 func showSchedule(env config.Environment, week, year int, reviewerSlackID, teamID, channelID string) {
 	reviewer, err := models.GetReviewerBySlackID(env, reviewerSlackID)
-	log.Println("INFO: Reviewer - ", reviewer)
-	log.Println("INFO: Error - ", err)
+	// log.Println("INFO: Reviewer - ", reviewer)
+	// log.Println("INFO: Error - ", err)
 	if err != nil {
 		log.Println("[ERROR] No such reviewer registered.", err)
 		errorMsg := fmt.Sprintf("Reviewer <@%s> is not registered. Please register first using /reviewer new command.", reviewerSlackID)
@@ -134,7 +134,7 @@ func updateSchedule(env config.Environment, teamID, channelID, responseURL strin
 
 	slotChecked = !slotChecked
 
-	reviewer, err = models.UpdateReviewerAvailability(env, reviewer, models.SlotReference{
+	reviewer, err = scheduling.UpdateReviewerAvailability(env, reviewer, scheduling.SlotReference{
 		SlotID:    scheduleInfo.SlotID,
 		WeekNo:    scheduleInfo.WeekNo,
 		Year:      scheduleInfo.Year,
@@ -225,7 +225,7 @@ func updateBooking(env config.Environment, teamID, channelID, responseURL string
 
 	isBooked = !isBooked
 
-	reviewer, err = models.UpdateReviewerBooking(env, reviewer, models.SlotBooking{
+	reviewer, err = scheduling.UpdateReviewerBooking(env, reviewer, scheduling.SlotBooking{
 		SlotID:   scheduleInfo.SlotID,
 		WeekNo:   scheduleInfo.WeekNo,
 		Year:     scheduleInfo.Year,
