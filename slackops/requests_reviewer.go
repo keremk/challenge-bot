@@ -79,7 +79,13 @@ func showSchedule(env config.Environment, week, year int, reviewerSlackID, teamI
 	// log.Println("[INFO] Slots available: ", slots)
 	// log.Println("[INFO] Reviewer is ", reviewer)
 
-	headerMsgText := fmt.Sprintf("%s schedule for week #: %d", reviewer.Name, week)
+	weekDescription, err := scheduling.WeekDescriptionFromWeekNo(week, year)
+	if err != nil {
+		log.Println("[ERROR] Week number not valid", err)
+		return
+	}
+
+	headerMsgText := fmt.Sprintf("<@%s>'s schedule in %s", reviewer.SlackID, weekDescription)
 	err = postMessage(env, teamID, channelID, toMsgOption(headerMsgText))
 	if err != nil {
 		log.Println("[ERROR] Cannot send the reviewer schedule header - ", err)
