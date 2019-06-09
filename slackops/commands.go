@@ -49,6 +49,8 @@ func ExecuteCommand(env config.Environment, request *http.Request) error {
 			go executeReviewerHelp(c)
 		case "new":
 			go executeNewReviewer(env, c)
+		case "edit":
+			go executeEditReviewer(env, c)
 		case "schedule":
 			go executeSchedule(env, c)
 		case "find":
@@ -133,7 +135,7 @@ func newExternalOptionsDialogInput(name, label, value string, optional bool) *sl
 	}
 }
 
-func newStaticOptionsDialogInput(name, label string, optional bool, options []slack.DialogSelectOption) *slack.DialogInputSelect {
+func newStaticOptionsDialogInput(name, label, value string, optional bool, options []slack.DialogSelectOption) *slack.DialogInputSelect {
 	return &slack.DialogInputSelect{
 		DialogInput: slack.DialogInput{
 			Type:     slack.InputTypeSelect,
@@ -143,5 +145,6 @@ func newStaticOptionsDialogInput(name, label string, optional bool, options []sl
 		},
 		DataSource: slack.DialogDataSourceStatic,
 		Options:    options,
+		Value: 			value,
 	}
 }

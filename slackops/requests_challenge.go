@@ -19,18 +19,11 @@ func handleSendChallenge(env config.Environment, icb slack.InteractionCallback) 
 		return err
 	}
 
-	state, err := stateFromString(icb.State)
-	if err != nil {
-		return err
-	}
-	returnChannel := state.channelID
-	teamID := icb.Team.ID
-
 	challenge, err := models.GetChallengeSetup(env, candidate.ChallengeName)
 	if err != nil {
 		return err
 	}
-	go sendChallenge(env, challenge, candidate, reviewers, returnChannel, teamID)
+	go sendChallenge(env, challenge, candidate, reviewers, icb.Channel.ID, icb.Team.ID)
 
 	return nil
 }

@@ -1,11 +1,14 @@
 package slackops
 
 import (
+	"fmt"
+	"log"
 	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/keremk/challenge-bot/config"
+	"github.com/keremk/challenge-bot/models"
 	"github.com/keremk/challenge-bot/scheduling"
 	"github.com/nlopes/slack"
 )
@@ -45,22 +48,17 @@ func executeReviewerHelp(c command) error {
 func executeNewReviewer(env config.Environment, c command) error {
 	s := c.slashCommand
 
-	// Create the dialog and send a message to open it
-	state := dialogState{
-		channelID: s.ChannelID,
-		argument:  c.arg,
-	}
-	dialog := newAddReviewerDialog(s.TriggerID, state)
+	dialog := newAddReviewerDialog(s.TriggerID)
 
 	return showDialog(env, s.TeamID, s.TriggerID, dialog)
 }
 
-func newAddReviewerDialog(triggerID string, state dialogState) slack.Dialog {
+func newAddReviewerDialog(triggerID string) slack.Dialog {
 	reviewerEl := slack.NewUsersSelect("reviewer_id", "Reviewer")
 	githubNameEl := slack.NewTextInput("github_alias", "Github Alias", "")
 	challengeNameEl := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
 	technologyListEl := slack.NewTextInput("technology_list", "Technology List", "")
-	experienceLevelEl := newStaticOptionsDialogInput("experience", "Experience Level", true, experienceOptions())
+	experienceLevelEl := newStaticOptionsDialogInput("experience", "Experience Level", "", true, experienceOptions())
 	elements := []slack.DialogElement{
 		reviewerEl,
 		githubNameEl,
@@ -74,7 +72,52 @@ func newAddReviewerDialog(triggerID string, state dialogState) slack.Dialog {
 		Title:          "Add Reviewer",
 		SubmitLabel:    "Add",
 		NotifyOnCancel: false,
-		State:          state.string(),
+		State:          "",
+		Elements:       elements,
+	}
+}
+
+func executeEditReviewer(env config.Environment, c command) error {
+	s := c.slashCommand
+
+	var reviewerSlackID string
+	if c.arg == "" {
+		reviewerSlackID = s.UserID
+	} else {
+		reviewerSlackID = parseSlackIDFromString(c.arg)
+	}
+	reviewer, err := models.GetReviewerBySlackID(env, reviewerSlackID)
+	if err != nil {
+		log.Println("[ERROR] No such reviewer registered.", err)
+		errorMsg := fmt.Sprintf("Reviewer <@%s> is not registered. Please register first using /reviewer new command.", reviewerSlackID)
+		postMessage(env, s.TeamID, s.ChannelID, toMsgOption(errorMsg))
+		return err
+	}
+
+	dialog := newEditReviewerDialog(s.TriggerID, reviewer)
+
+	return showDialog(env, s.TeamID, s.TriggerID, dialog)
+}
+
+func newEditReviewerDialog(triggerID string, reviewer models.Reviewer) slack.Dialog {
+	githubNameEl := slack.NewTextInput("github_alias", "Github Alias", reviewer.GithubAlias)
+	challengeNameEl := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
+	technologyListEl := slack.NewTextInput("technology_list", "Technology List", reviewer.TechnologyList)
+	experienceLevel := strconv.Itoa(reviewer.Experience)
+	experienceLevelEl := newStaticOptionsDialogInput("experience", "Experience Level", experienceLevel, true, experienceOptions())
+	elements := []slack.DialogElement{
+		githubNameEl,
+		challengeNameEl,
+		technologyListEl,
+		experienceLevelEl,
+	}
+	return slack.Dialog{
+		TriggerID:      triggerID,
+		CallbackID:     "edit_reviewer",
+		Title:          "Edit Reviewer",
+		SubmitLabel:    "Edit",
+		NotifyOnCancel: false,
+		State:          reviewer.SlackID,
 		Elements:       elements,
 	}
 }
@@ -82,28 +125,23 @@ func newAddReviewerDialog(triggerID string, state dialogState) slack.Dialog {
 func executeSchedule(env config.Environment, c command) error {
 	s := c.slashCommand
 
-	var reviewer string
+	var reviewerSlackID string
 	if c.arg == "" {
-		reviewer = s.UserID
+		reviewerSlackID = s.UserID
 	} else {
-		reviewer = parseSlackIDFromString(c.arg)
-	}
-	// Create the dialog and send a message to open it
-	state := dialogState{
-		channelID: s.ChannelID,
-		argument:  reviewer,
+		reviewerSlackID = parseSlackIDFromString(c.arg)
 	}
 
-	dialog := newScheduleDialog(s.TriggerID, state)
+	dialog := newScheduleDialog(s.TriggerID, reviewerSlackID)
 
 	return showDialog(env, s.TeamID, s.TriggerID, dialog)
 }
 
-func newScheduleDialog(triggerID string, state dialogState) slack.Dialog {
-	weekOfYearEl := newStaticOptionsDialogInput("year_week", "Week of the Year", true, weekOfYearOptions(true))
+func newScheduleDialog(triggerID string, reviewerSlackID string) slack.Dialog {
+	weekOfYearDefault := encodeWeekAndYear(0, time.Now().Year())
+	weekOfYearEl := newStaticOptionsDialogInput("year_week", "Week of the Year", weekOfYearDefault, true, weekOfYearOptions(true))
 
 	elements := []slack.DialogElement{
-		// allOrSelectWeekEl,
 		weekOfYearEl,
 	}
 	return slack.Dialog{
@@ -112,7 +150,7 @@ func newScheduleDialog(triggerID string, state dialogState) slack.Dialog {
 		Title:          "Update Schedule",
 		SubmitLabel:    "Update",
 		NotifyOnCancel: false,
-		State:          state.string(),
+		State:          reviewerSlackID,
 		Elements:       elements,
 	}
 }
@@ -176,26 +214,24 @@ func parseSlackIDFromString(combinedID string) string {
 func executeFindReviewers(env config.Environment, c command) error {
 	s := c.slashCommand
 
-	var reviewer string
+	var reviewerSlackID string
 	if c.arg == "" {
-		reviewer = s.UserID
+		reviewerSlackID = s.UserID
 	} else {
-		reviewer = parseSlackIDFromString(c.arg)
-	}
-	// Create the dialog and send a message to open it
-	state := dialogState{
-		channelID: s.ChannelID,
-		argument:  reviewer,
+		reviewerSlackID = parseSlackIDFromString(c.arg)
 	}
 
-	dialog := newFindDialog(s.TriggerID, state)
+	dialog := newFindDialog(s.TriggerID, reviewerSlackID)
 
 	return showDialog(env, s.TeamID, s.TriggerID, dialog)
 }
 
-func newFindDialog(triggerID string, state dialogState) slack.Dialog {
-	weekOfYearEl := newStaticOptionsDialogInput("year_week", "Week of the Year", true, weekOfYearOptions(false))
-	dayEl := newStaticOptionsDialogInput("day", "Day of Week", true, dayOptions())
+func newFindDialog(triggerID string, reviewerSlackID string) slack.Dialog {
+	defaultYear, defaultWeekNo := time.Now().ISOWeek()
+	weekOfYearDefault := encodeWeekAndYear(defaultWeekNo, defaultYear)
+	weekOfYearEl := newStaticOptionsDialogInput("year_week", "Week of the Year", weekOfYearDefault, true, weekOfYearOptions(false))
+	defaultDay := "Monday"
+	dayEl := newStaticOptionsDialogInput("day", "Day of Week", defaultDay, true, dayOptions())
 	challengeNameEl := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
 	technologyEl := slack.NewTextInput("technology", "Technology List", "")
 	elements := []slack.DialogElement{
@@ -210,7 +246,7 @@ func newFindDialog(triggerID string, state dialogState) slack.Dialog {
 		Title:          "Find Reviewers",
 		SubmitLabel:    "Search",
 		NotifyOnCancel: false,
-		State:          state.string(),
+		State:          reviewerSlackID,
 		Elements:       elements,
 	}
 }

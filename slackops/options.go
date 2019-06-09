@@ -34,6 +34,8 @@ func HandleOptions(env config.Environment, readCloser io.ReadCloser) ([]byte, er
 	case "new_challenge":
 		respJSON, err := handleNewChallengeOptions(env, icb)
 		return respJSON, err
+	case "edit_reviewer":
+		fallthrough
 	case "new_reviewer":
 		respJSON, err := handleNewReviewerOptions(env, icb)
 		return respJSON, err
@@ -58,11 +60,7 @@ func handleSendChallengeOptions(env config.Environment, icb slack.InteractionCal
 	case "reviewer1_id":
 		fallthrough
 	case "reviewer2_id":
-		state, err := stateFromString(icb.State)
-		if err != nil {
-			panic("Unknown error handling state")
-		}
-		js, err := getReviewerList(env, state.argument)
+		js, err := getReviewerList(env, icb.State)
 		if err != nil {
 			return nil, err
 		}

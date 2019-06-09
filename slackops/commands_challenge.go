@@ -48,11 +48,11 @@ func executeSendChallenge(env config.Environment, c command) error {
 	s := c.slashCommand
 
 	// Create the dialog and send a message to open it
-	state := dialogState{
-		channelID: s.ChannelID,
-		argument:  c.arg,
-	}
-	dialog := sendChallengeDialog(s.TriggerID, state)
+	// state := dialogState{
+	// 	channelID: s.ChannelID,
+	// 	argument:  c.arg,
+	// }
+	dialog := sendChallengeDialog(s.TriggerID, c.arg)
 
 	return showDialog(env, s.TeamID, s.TriggerID, dialog)
 }
@@ -61,22 +61,21 @@ func executeNewChallenge(env config.Environment, c command) error {
 	s := c.slashCommand
 
 	// Create the dialog and send a message to open it
-	state := dialogState{
-		channelID: s.ChannelID,
-		argument:  c.arg,
-	}
-	dialog := newChallengeDialog(s.TriggerID, state)
+	// state := dialogState{
+	// 	channelID: s.ChannelID,
+	// 	argument:  c.arg,
+	// }
+	dialog := newChallengeDialog(s.TriggerID)
 
 	return showDialog(env, s.TeamID, s.TriggerID, dialog)
 }
 
-func sendChallengeDialog(triggerID string, state dialogState) slack.Dialog {
+func sendChallengeDialog(triggerID string, challengeName string) slack.Dialog {
 	candidateNameElement := slack.NewTextInput("candidate_name", "Candidate Name", "")
 	githubNameElement := slack.NewTextInput("github_alias", "Github Alias", "")
 	resumeURLElement := slack.NewTextInput("resume_URL", "Resume URL", "")
 	challengeNameElement := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
 
-	challengeName := state.argument
 	reviewer1OptionsElement := newExternalOptionsDialogInput("reviewer1_id", "Reviewer 1", challengeName, true)
 	reviewer2OptionsElement := newExternalOptionsDialogInput("reviewer2_id", "Reviewer 2", challengeName, true)
 
@@ -95,12 +94,13 @@ func sendChallengeDialog(triggerID string, state dialogState) slack.Dialog {
 		Title:          "Send Coding Challenge",
 		SubmitLabel:    "Send",
 		NotifyOnCancel: false,
-		State:          state.string(),
-		Elements:       elements,
+		State:          challengeName,
+		// State:          state.string(),
+		Elements: elements,
 	}
 }
 
-func newChallengeDialog(triggerID string, state dialogState) slack.Dialog {
+func newChallengeDialog(triggerID string) slack.Dialog {
 	challengeNameEl := slack.NewTextInput("challenge_name", "Challenge Name", "")
 	templateRepoNameEl := slack.NewTextInput("template_repo", "Template Repo Name", "")
 	repoNameFormatEl := slack.NewTextInput("repo_name_format", "Repo Name Format", "test_CHALLENGENAME-GITHUBALIAS")
@@ -118,7 +118,7 @@ func newChallengeDialog(triggerID string, state dialogState) slack.Dialog {
 		Title:          "New Coding Challenge",
 		SubmitLabel:    "Create",
 		NotifyOnCancel: false,
-		State:          state.string(),
-		Elements:       elements,
+		// State:          state.string(),
+		Elements: elements,
 	}
 }

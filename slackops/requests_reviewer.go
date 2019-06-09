@@ -16,8 +16,9 @@ import (
 func handleNewReviewer(env config.Environment, icb slack.InteractionCallback) error {
 	addReviewerInput := icb.Submission
 	// log.Println("[INFO] Reviewer data", addReviewerInput)
+	reviewerSlackID := addReviewerInput["reviewer_id"]
 
-	user, err := getUserInfo(env, addReviewerInput["reviewer_id"], icb.Team.ID)
+	user, err := getUserInfo(env, reviewerSlackID, icb.Team.ID)
 	if err != nil {
 		return err
 	}
@@ -28,12 +29,27 @@ func handleNewReviewer(env config.Environment, icb slack.InteractionCallback) er
 	err = models.UpdateReviewer(env, reviewer)
 	if err != nil {
 		log.Println("[ERROR] Could not update reviewer in db ", err)
-		_ = postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption("We were not able to create the new reviewer"))
+		postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption("We were not able to create the new reviewer"))
 		return err
 	}
 
 	msgText := fmt.Sprintf("We created a reviewer named %s in our database. They will be reviewing: %s, and their Github alias is: %s", reviewer.Name, reviewer.ChallengeName, reviewer.GithubAlias)
-	_ = postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption(msgText))
+	postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption(msgText))
+	return nil
+}
+
+func handleEditReviewer(env config.Environment, icb slack.InteractionCallback) error {
+	reviewer, err := models.EditReviewer(env, icb.State, icb.Submission)
+	// log.Println("[INFO] Reviewer is ", reviewer)
+
+	if err != nil {
+		log.Println("[ERROR] Could not update reviewer in db ", err)
+		postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption("We were not able to create the new reviewer"))
+		return err
+	}
+
+	msgText := fmt.Sprintf("We edited the reviewer named %s in our database.", reviewer.Name)
+	postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption(msgText))
 	return nil
 }
 
@@ -44,11 +60,7 @@ func handleShowSchedule(env config.Environment, icb slack.InteractionCallback) e
 	week, year := decodeWeekAndYear(scheduleInput["year_week"])
 	log.Println("[INFO] Week ", week)
 
-	state, err := stateFromString(icb.State)
-	if err != nil {
-		log.Println("[ERROR] State not retrieved - ", err)
-	}
-	reviewerSlackID := state.argument
+	reviewerSlackID := icb.State
 	log.Println("[INFO] Reviewer ID", reviewerSlackID)
 
 	go showSchedule(env, week, year, reviewerSlackID, icb.Team.ID, icb.Channel.ID)

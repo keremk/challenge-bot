@@ -26,22 +26,28 @@ type Reviewer struct {
 
 func NewReviewer(name string, input map[string]string) Reviewer {
 	id := fmt.Sprintf("%s-%s", name, util.RandomString(8))
+
+	reviewer := Reviewer{
+		ID:           id,
+		SlackID:      input["reviewer_id"],
+		Name:         name,
+		Availability: make(map[string][]string),
+		Bookings:     make(map[string][]string),
+	}
+	return reviewerFromInput(reviewer, input)
+}
+
+func reviewerFromInput(reviewer Reviewer, input map[string]string) Reviewer {
+	reviewer.GithubAlias = input["github_alias"]
+	reviewer.TechnologyList = input["technology_list"]
+	reviewer.ChallengeName = input["challenge_name"]
 	experience, err := strconv.Atoi(input["experience"])
 	if err != nil {
 		log.Println("[ERROR] Experience level not properly encoded, assuming lowest", err)
 		experience = 0
 	}
-	return Reviewer{
-		ID:             id,
-		Name:           name,
-		GithubAlias:    input["github_alias"],
-		SlackID:        input["reviewer_id"],
-		TechnologyList: input["technology_list"],
-		ChallengeName:  input["challenge_name"],
-		Experience:     experience,
-		Availability:   make(map[string][]string),
-		Bookings:       make(map[string][]string),
-	}
+	reviewer.Experience = experience
+	return reviewer
 }
 
 func GetReviewerBySlackID(env config.Environment, slackID string) (Reviewer, error) {
@@ -83,6 +89,17 @@ func GetAllReviewersForChallenge(env config.Environment, challengeName string) (
 		return nil, errors.New("[ERROR] Cannot convert")
 	}
 	return all, err
+}
+
+func EditReviewer(env config.Environment, slackID string, input map[string]string) (Reviewer, error) {
+	reviewer, err := GetReviewerBySlackID(env, slackID)
+	if err != nil {
+		return reviewer, err
+	}
+
+	reviewer = reviewerFromInput(reviewer, input)
+	err = UpdateReviewer(env, reviewer)
+	return reviewer, err
 }
 
 func UpdateReviewer(env config.Environment, reviewer Reviewer) error {

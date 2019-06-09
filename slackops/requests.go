@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/url"
@@ -16,27 +15,6 @@ import (
 )
 
 const dreadedPrivateRepoError = "422 Visibility can't be private"
-
-type dialogState struct {
-	channelID string
-	argument  string
-}
-
-func stateFromString(s string) (dialogState, error) {
-	x := strings.Split(s, ",")
-	if len(x) < 2 {
-		return dialogState{}, errors.New("[ERROR] state persisted incorrectly")
-	}
-
-	return dialogState{
-		channelID: x[0],
-		argument:  x[1],
-	}, nil
-}
-
-func (d dialogState) string() string {
-	return fmt.Sprintf("%s,%s", d.channelID, d.argument)
-}
 
 func HandleRequests(env config.Environment, readCloser io.ReadCloser) error {
 	icb, err := parseInteractionCallback(readCloser, env.VerificationToken)
@@ -67,6 +45,8 @@ func handleDialogSubmission(env config.Environment, icb slack.InteractionCallbac
 		err = handleNewChallenge(env, icb)
 	case "new_reviewer":
 		err = handleNewReviewer(env, icb)
+	case "edit_reviewer":
+		err = handleEditReviewer(env, icb)
 	case "schedule_update":
 		err = handleShowSchedule(env, icb)
 	case "find_reviewers":
@@ -81,14 +61,14 @@ func handleDialogSubmission(env config.Environment, icb slack.InteractionCallbac
 func handleBlockActions(env config.Environment, icb slack.InteractionCallback, readCloser io.ReadCloser) error {
 	var err error
 
-	log.Println("State of message = ", icb.State)
-	log.Printf("Message Response URL %s", icb.ResponseURL)
-	log.Printf("Block actions %s", icb.ActionCallback.BlockActions)
-	log.Printf("Action ID of first %s", icb.ActionCallback.BlockActions[0].ActionID)
-	log.Printf("Action Text of first %s", icb.ActionCallback.BlockActions[0].Text)
-	log.Printf("Action Value of first %s", icb.ActionCallback.BlockActions[0].Value)
-	log.Printf("Action Type of first %s", icb.ActionCallback.BlockActions[0].Type)
-	log.Printf("Action BlockID of first %s", icb.ActionCallback.BlockActions[0].BlockID)
+	// log.Println("State of message = ", icb.State)
+	// log.Printf("Message Response URL %s", icb.ResponseURL)
+	// log.Printf("Block actions %s", icb.ActionCallback.BlockActions)
+	// log.Printf("Action ID of first %s", icb.ActionCallback.BlockActions[0].ActionID)
+	// log.Printf("Action Text of first %s", icb.ActionCallback.BlockActions[0].Text)
+	// log.Printf("Action Value of first %s", icb.ActionCallback.BlockActions[0].Value)
+	// log.Printf("Action Type of first %s", icb.ActionCallback.BlockActions[0].Type)
+	// log.Printf("Action BlockID of first %s", icb.ActionCallback.BlockActions[0].BlockID)
 
 	action, encodedActionInfo, err := decodeAction(icb.ActionCallback.BlockActions[0].ActionID)
 	log.Printf("Action %s, Encoded ActionInfo %s", action, encodedActionInfo)
