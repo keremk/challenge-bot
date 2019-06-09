@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"log"
 	"reflect"
 
@@ -53,8 +54,13 @@ func (s FirestoreDb) FindFirst(key, value string, obj interface{}) error {
 	defer client.Close()
 
 	docs, err := client.Collection(s.collection).Where(key, "==", value).Documents(ctx).GetAll()
-	if err != nil || (len(docs) < 1) {
-		log.Println("[ERROR] cannot find object", err)
+	if err != nil {
+		log.Println("[ERROR] cannot find object - ", err)
+		return err
+	}
+	if len(docs) < 1 {
+		err = errors.New("Empty collection returned")
+		log.Println("[ERROR] cannot find object - ", err)
 		return err
 	}
 	return docs[0].DataTo(obj)

@@ -58,10 +58,13 @@ func handleShowSchedule(env config.Environment, icb slack.InteractionCallback) e
 
 func showSchedule(env config.Environment, week, year int, reviewerSlackID, teamID, channelID string) {
 	reviewer, err := models.GetReviewerBySlackID(env, reviewerSlackID)
+	log.Println("INFO: Reviewer - ", reviewer)
+	log.Println("INFO: Error - ", err)
 	if err != nil {
 		log.Println("[ERROR] No such reviewer registered.", err)
-		errorMsg := fmt.Sprintf("Reviewer <%s> is not registered.", reviewerSlackID)
+		errorMsg := fmt.Sprintf("Reviewer <@%s> is not registered. Please register first using /reviewer new command.", reviewerSlackID)
 		postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+		return
 	}
 
 	challenge, err := models.GetChallengeSetup(env, reviewer.ChallengeName)
@@ -69,6 +72,7 @@ func showSchedule(env config.Environment, week, year int, reviewerSlackID, teamI
 		log.Println("[ERROR] Reviewer did not register to a challenge.", err)
 		errorMsg := fmt.Sprintf("Reviewer <%s> did not register for a specific challenge.", reviewer.Name)
 		postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+		return
 	}
 
 	slots := scheduling.SlotsForWeek(week, year, reviewer, challenge)
@@ -79,6 +83,7 @@ func showSchedule(env config.Environment, week, year int, reviewerSlackID, teamI
 	err = postMessage(env, teamID, channelID, toMsgOption(headerMsgText))
 	if err != nil {
 		log.Println("[ERROR] Cannot send the reviewer schedule header - ", err)
+		return
 	}
 
 	scheduleMsgBlock := renderSchedule(week, year, reviewer, slots)
