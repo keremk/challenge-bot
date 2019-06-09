@@ -3,7 +3,9 @@ package models
 import (
 	"errors"
 	"fmt"
+	"log"
 	"reflect"
+	"strconv"
 
 	"github.com/keremk/challenge-bot/config"
 	"github.com/keremk/challenge-bot/db"
@@ -30,12 +32,18 @@ type Reviewer struct {
 	SlackID        string
 	TechnologyList string
 	ChallengeName  string
+	Experience     int
 	Availability   map[string][]string
 	Bookings       map[string][]string
 }
 
 func NewReviewer(name string, input map[string]string) Reviewer {
 	id := fmt.Sprintf("%s-%s", name, util.RandomString(8))
+	experience, err := strconv.Atoi(input["experience"])
+	if err != nil {
+		log.Println("[ERROR] Experience level not properly encoded, assuming lowest", err)
+		experience = 0
+	}
 	return Reviewer{
 		ID:             id,
 		Name:           name,
@@ -43,6 +51,7 @@ func NewReviewer(name string, input map[string]string) Reviewer {
 		SlackID:        input["reviewer_id"],
 		TechnologyList: input["technology_list"],
 		ChallengeName:  input["challenge_name"],
+		Experience:     experience,
 		Availability:   make(map[string][]string),
 		Bookings:       make(map[string][]string),
 	}

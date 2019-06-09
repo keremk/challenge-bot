@@ -2,6 +2,7 @@ package slackops
 
 import (
 	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/keremk/challenge-bot/config"
@@ -59,11 +60,13 @@ func newAddReviewerDialog(triggerID string, state dialogState) slack.Dialog {
 	githubNameEl := slack.NewTextInput("github_alias", "Github Alias", "")
 	challengeNameEl := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
 	technologyListEl := slack.NewTextInput("technology_list", "Technology List", "")
+	experienceLevelEl := newStaticOptionsDialogInput("experience", "Experience Level", true, experienceOptions())
 	elements := []slack.DialogElement{
 		reviewerEl,
 		githubNameEl,
 		challengeNameEl,
 		technologyListEl,
+		experienceLevelEl,
 	}
 	return slack.Dialog{
 		TriggerID:      triggerID,
@@ -137,10 +140,22 @@ func weekOfYearOptions(includeAllWeeks bool) []slack.DialogSelectOption {
 	return selectOptions
 }
 
+func experienceOptions() []slack.DialogSelectOption {
+	experienceLevel := []string{"Low", "Mid", "High"}
+	selectOptions := make([]slack.DialogSelectOption, 0, len(experienceLevel))
+	for i, level := range experienceLevel {
+		selectOptions = append(selectOptions, slack.DialogSelectOption{
+			Label: level,
+			Value: strconv.Itoa(i),
+		})
+	}
+	return selectOptions
+}
+
 func dayOptions() []slack.DialogSelectOption {
 	daysOfWeek := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"}
 
-	selectOptions := make([]slack.DialogSelectOption, 0, 5)
+	selectOptions := make([]slack.DialogSelectOption, 0, len(daysOfWeek))
 	for _, day := range daysOfWeek {
 		selectOptions = append(selectOptions, slack.DialogSelectOption{
 			Label: day,
