@@ -71,7 +71,11 @@ func renderSchedule(weekNo, year int, reviewer models.Reviewer, slots []scheduli
 
 func renderReviewers(weekNo, year int, slots map[string]*scheduling.SlotAvailability) slack.MsgOption {
 	sections := make([]slack.Block, 0, 50)
-	headerText := fmt.Sprintf("*Interviewer List For Week:* %d ", weekNo)
+	weekDescription, err := scheduling.WeekDescriptionFromWeekNo(weekNo, year)
+	if err != nil {
+		log.Println("[ERROR] Week number not valid", err)
+	}
+	headerText := fmt.Sprintf("*Interviewer List For Week:* %s ", weekDescription)
 	headerEl := slack.NewTextBlockObject("mrkdwn", headerText, false, false)
 	sections = append(sections, slack.NewSectionBlock(headerEl, nil, nil))
 
