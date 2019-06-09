@@ -111,12 +111,16 @@ func reviewerDialogElements(reviewer models.Reviewer, editMode bool) []slack.Dia
 	technologyListEl := slack.NewTextInput("technology_list", "Technology List", reviewer.TechnologyList)
 	experienceLevel := strconv.Itoa(reviewer.Experience)
 	experienceLevelEl := newStaticOptionsDialogInput("experience", "Experience Level", experienceLevel, true, experienceOptions())
+	bookingsPerWeek := strconv.Itoa(reviewer.BookingsPerWeek)
+	bookingsPerWeekEl := newStaticOptionsDialogInput("bookings_week", "# Bookings per Week", bookingsPerWeek, true,
+		bookingsOptions())
 
 	return append(elements,
 		githubNameEl,
 		challengeNameEl,
 		technologyListEl,
 		experienceLevelEl,
+		bookingsPerWeekEl,
 	)
 }
 
@@ -196,6 +200,18 @@ func dayOptions() []slack.DialogSelectOption {
 		selectOptions = append(selectOptions, slack.DialogSelectOption{
 			Label: day,
 			Value: day,
+		})
+	}
+	return selectOptions
+}
+
+func bookingsOptions() []slack.DialogSelectOption {
+	selectOptions := make([]slack.DialogSelectOption, 0, 7)
+	for i := 1; i < 7; i++ {
+		label := fmt.Sprintf("Max %d times/week", i)
+		selectOptions = append(selectOptions, slack.DialogSelectOption{
+			Label: label,
+			Value: strconv.Itoa(i),
 		})
 	}
 	return selectOptions

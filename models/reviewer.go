@@ -13,15 +13,16 @@ import (
 )
 
 type Reviewer struct {
-	ID             string
-	Name           string
-	GithubAlias    string
-	SlackID        string
-	TechnologyList string
-	ChallengeName  string
-	Experience     int
-	Availability   map[string][]string
-	Bookings       map[string][]string
+	ID              string
+	Name            string
+	GithubAlias     string
+	SlackID         string
+	TechnologyList  string
+	ChallengeName   string
+	Experience      int
+	BookingsPerWeek int
+	Availability    map[string][]string
+	Bookings        map[string][]string
 }
 
 func NewReviewer(name string, input map[string]string) Reviewer {
@@ -41,12 +42,20 @@ func reviewerFromInput(reviewer Reviewer, input map[string]string) Reviewer {
 	reviewer.GithubAlias = input["github_alias"]
 	reviewer.TechnologyList = input["technology_list"]
 	reviewer.ChallengeName = input["challenge_name"]
+
 	experience, err := strconv.Atoi(input["experience"])
 	if err != nil {
 		log.Println("[ERROR] Experience level not properly encoded, assuming lowest", err)
 		experience = 0
 	}
 	reviewer.Experience = experience
+
+	bookingsPerWeek, err := strconv.Atoi(input["bookings_week"])
+	if err != nil {
+		log.Println("[ERROR] Bookings per week not properly encoded, assuming 1", err)
+		bookingsPerWeek = 1
+	}
+	reviewer.BookingsPerWeek = bookingsPerWeek
 	return reviewer
 }
 
