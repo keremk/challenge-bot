@@ -120,6 +120,66 @@ func renderReviewer(reviewerInfo scheduling.ReviewerInfo, slotID string, weekNo,
 	return slack.NewSectionBlock(reviewerNameEl, nil, accessory)
 }
 
+func renderBookings(reviewer models.Reviewer, challenge models.ChallengeSetup) []slack.Block {
+	bookings := reviewer.Bookings
+
+	sections := make([]slack.Block, 0, 50)
+	reviewerNameText := fmt.Sprintf("All bookings for *<@%s>* (%s)", reviewer.SlackID, reviewer.TechnologyList)
+	reviewerNameEl := slack.NewTextBlockObject("mrkdwn", reviewerNameText, false, false)
+	sections = append(sections, slack.NewSectionBlock(reviewerNameEl, nil, nil))
+
+	currentYear, currentWeek := time.Now().ISOWeek()
+	noBookingsFound := true
+	for weekInfo, bookingsPerWeek := range bookings {
+		if len(bookingsPerWeek) == 0 {
+			continue
+		}
+		weekNo, year := decodeWeekAndYear(weekInfo)
+		if weekNo < currentWeek || year < currentYear {
+			continue
+		}
+		weekDescription, err := scheduling.WeekDescriptionFromWeekNo(weekNo, year)
+		if err != nil {
+			log.Println("[ERROR] Week description is not retrieved")
+			weekDescription = fmt.Sprintf("Week # %d - ", weekNo)
+		}
+		weekDescriptionEl := slack.NewTextBlockObject("mrkdwn", weekDescription, false, false)
+		sections = append(sections, slack.NewSectionBlock(weekDescriptionEl, nil, nil))
+
+		for _, bookingKey := range bookingsPerWeek {
+			bookingSlot := challenge.Slots[bookingKey]
+			sections = append(sections, renderBooking(*bookingSlot, weekNo, year, reviewer))
+		}
+		noBookingsFound = false
+	}
+	if noBookingsFound {
+		noBookingsFoundEl := slack.NewTextBlockObject("mrkdwn", "No bookings found.", false, false)
+		sections = append(sections, slack.NewSectionBlock(noBookingsFoundEl, nil, nil))
+	}
+	return sections
+}
+
+func renderBooking(slot models.Slot, weekNo, year int, reviewer models.Reviewer) *slack.SectionBlock {
+	slotDescriptionText := fmt.Sprintf("*Slot*: %s", slot.Name)
+	slotDescriptionEl := slack.NewTextBlockObject("mrkdwn", slotDescriptionText, false, false)
+
+	encodedScheduleAction := encodeScheduleActionInfo(scheduleActionInfo{
+		SlotID:     slot.ID,
+		WeekNo:     weekNo,
+		Year:       year,
+		ReviewerID: reviewer.SlackID,
+	})
+
+	buttonTextBlock := slack.NewTextBlockObject("plain_text", "Unbook", false, false)
+	encodedID := encodeAction(showBookings, encodedScheduleAction)
+	encodedValue := strconv.FormatBool(true)
+
+	buttonEl := slack.NewButtonBlockElement(encodedID, encodedValue, buttonTextBlock)
+
+	accessory := slack.NewAccessory(buttonEl)
+	return slack.NewSectionBlock(slotDescriptionEl, nil, accessory)
+}
+
 func newActionBlock(blockID string, elements []slack.BlockElement) slack.ActionBlock {
 	return slack.ActionBlock{
 		Type:    slack.MBTAction,

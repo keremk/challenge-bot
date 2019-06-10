@@ -78,6 +78,8 @@ func handleBlockActions(env config.Environment, icb slack.InteractionCallback, r
 	switch action {
 	case scheduleUpdate:
 		err = handleUpdateSchedule(env, icb, encodedActionInfo)
+	case showBookings:
+		fallthrough
 	case findReviewers:
 		err = handleBookings(env, icb, encodedActionInfo)
 	default:

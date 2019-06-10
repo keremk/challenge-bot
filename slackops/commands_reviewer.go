@@ -1,6 +1,7 @@
 package slackops
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"regexp"
@@ -36,6 +37,34 @@ func executeReviewerHelp(c command) error {
 			"text": {
 				"type": "mrkdwn",
 				"text": "*/reviewer new* : Opens a dialog to register a reviewer"
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*/reviewer edit @SLACKID* : Opens a dialog to edit the reviewer you specified with SLACKID. If SLACKID is omitted, it assumes you are the reviewer."
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*/reviewer find* : Opens a dialog to find reviewers and book them"
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*/reviewer schedule @SLACKID* : Opens a dialog to setup a reviewer schedule for all weeks or a specific week. If SLACKID is omitted, assumes you are the reviewer."
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*/reviewer bookings @SLACKID* : Shows all active bookings for the reviewer with SLACKID. If SLACKID is omitted, assumes you are the reviewer."
 			}
 		}
 	]
@@ -263,4 +292,51 @@ func newFindDialog(triggerID string, reviewerSlackID string) slack.Dialog {
 		State:          reviewerSlackID,
 		Elements:       elements,
 	}
+}
+
+type sectionMsg struct {
+	ReplaceOriginal bool          `json:"replace_original,omitempty"`
+	Blocks          []slack.Block `json:"blocks,omitempty"`
+}
+
+func executeShowBookings(env config.Environment, c command) error {
+	s := c.slashCommand
+
+	var reviewerSlackID string
+	if c.arg == "" {
+		reviewerSlackID = s.UserID
+	} else {
+		reviewerSlackID = parseSlackIDFromString(c.arg)
+	}
+
+	reviewer, err := models.GetReviewerBySlackID(env, reviewerSlackID)
+	if err != nil {
+		log.Println("[ERROR] No such reviewer registered.", err)
+		errorMsg := fmt.Sprintf("Reviewer <@%s> is not registered. Please register first using /reviewer new command.", reviewerSlackID)
+		postMessage(env, s.TeamID, s.ChannelID, toMsgOption(errorMsg))
+		return err
+	}
+	challenge, err := models.GetChallengeSetup(env, reviewer.ChallengeName)
+	if err != nil {
+		log.Println("[ERROR] Invalid challenge for reviewer", err)
+		errorMsg := fmt.Sprintf("Reviewer <@%s> does not seem to have a valid challenge they registered. Please use /reviewer edit to register a challenge.", reviewerSlackID)
+		postMessage(env, s.TeamID, s.ChannelID, toMsgOption(errorMsg))
+		return err
+	}
+
+	sections := renderBookings(reviewer, challenge)
+	msg := sectionMsg{
+		ReplaceOriginal: false,
+		Blocks:          sections,
+	}
+
+	respJSON, err := json.Marshal(msg)
+	if err != nil {
+		log.Println("[ERROR] Cannot marshal the json response - ", err)
+		return err
+	}
+	// log.Println(string(respJSON))
+
+	sendDelayedResponse(s.ResponseURL, string(respJSON))
+	return nil
 }

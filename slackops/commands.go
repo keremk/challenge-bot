@@ -55,6 +55,8 @@ func ExecuteCommand(env config.Environment, request *http.Request) error {
 			go executeSchedule(env, c)
 		case "find":
 			go executeFindReviewers(env, c)
+		case "bookings":
+			go executeShowBookings(env, c)
 		default:
 			log.Println("[ERROR] Unexpected Command ", c.mainCommand)
 			return errors.New("Unexpected command")

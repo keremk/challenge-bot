@@ -43,6 +43,7 @@ type actionType = string
 const (
 	scheduleUpdate actionType = "schedule_update"
 	findReviewers  actionType = "find_reviewers"
+	showBookings   actionType = "show_bookings"
 )
 
 func encodeAction(action actionType, input string) string {
