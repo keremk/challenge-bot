@@ -3,7 +3,6 @@ package controllers
 import (
 	"log"
 	"net/http"
-	"reflect"
 
 	"github.com/google/go-github/github"
 	"github.com/keremk/challenge-bot/config"
@@ -29,18 +28,18 @@ func (gh ghEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("Event received - ")
+	// log.Println("Event received - ")
 
 	switch event := event.(type) {
 	case *github.PullRequestEvent:
 		if *event.Action == "opened" {
-			log.Println("PR event")
+			// log.Println("PR event")
 		}
 	case *github.InstallationEvent:
 		if *event.Action == "created" {
 			log.Printf("Installation successful with id = %d", *event.Installation.ID)
 		}
 	default:
-		log.Println("Event is - ", reflect.TypeOf(event))
+		// log.Println("Event is - ", reflect.TypeOf(event))
 	}
 }
