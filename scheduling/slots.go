@@ -214,8 +214,13 @@ func UpdateReviewerBooking(env config.Environment, reviewer models.Reviewer, ref
 	if slots == nil {
 		slots = make([]string, 0, 20)
 	}
+	maxBookings := reviewer.BookingsPerWeek
+
 	var newSlots []string
 	if ref.IsBooked {
+		if len(slots) >= maxBookings {
+			return reviewer, MaxBookingsError{}
+		}
 		newSlots = addSlot(slots, ref.SlotID)
 	} else {
 		newSlots = removeSlot(slots, ref.SlotID)

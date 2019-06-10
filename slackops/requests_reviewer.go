@@ -239,9 +239,8 @@ func updateBooking(env config.Environment, teamID, channelID, responseURL string
 		errorMsg := fmt.Sprintf("Reviewer <%s> is not registered.", scheduleInfo.ReviewerID)
 		postMessage(env, teamID, channelID, toMsgOption(errorMsg))
 	}
-	log.Println("[INFO] Reviewer is - ", reviewer)
-
-	isBooked = !isBooked
+	// log.Println("[INFO] Reviewer is - ", reviewer)
+	isBooked = !isBooked // Toggle booking
 
 	reviewer, err = scheduling.UpdateReviewerBooking(env, reviewer, scheduling.SlotBooking{
 		SlotID:   scheduleInfo.SlotID,
@@ -250,9 +249,17 @@ func updateBooking(env config.Environment, teamID, channelID, responseURL string
 		IsBooked: isBooked,
 	})
 	if err != nil {
-		log.Println("[ERROR] Update booking not successful - ", err)
-		errorMsg := fmt.Sprintf("There was an error. Booking cannot be updated.")
-		postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+		switch err.(type) {
+		case scheduling.MaxBookingsError:
+			errorMsg := fmt.Sprintf("Reviewer can only be booked a maximum of %d times/week. Please unbook another appointment in that week.", reviewer.BookingsPerWeek)
+			postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+			return
+		default:
+			log.Println("[ERROR] Update booking not successful - ", err)
+			errorMsg := fmt.Sprintf("There was an error. Booking cannot be updated.")
+			postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+			return
+		}
 	}
 
 	var msg string
