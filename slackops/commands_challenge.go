@@ -47,11 +47,6 @@ func executeChallengeHelp(c command) error {
 func executeSendChallenge(env config.Environment, c command) error {
 	s := c.slashCommand
 
-	// Create the dialog and send a message to open it
-	// state := dialogState{
-	// 	channelID: s.ChannelID,
-	// 	argument:  c.arg,
-	// }
 	dialog := sendChallengeDialog(s.TriggerID, c.arg)
 
 	return showDialog(env, s.TeamID, s.TriggerID, dialog)
@@ -60,11 +55,6 @@ func executeSendChallenge(env config.Environment, c command) error {
 func executeNewChallenge(env config.Environment, c command) error {
 	s := c.slashCommand
 
-	// Create the dialog and send a message to open it
-	// state := dialogState{
-	// 	channelID: s.ChannelID,
-	// 	argument:  c.arg,
-	// }
 	dialog := newChallengeDialog(s.TriggerID)
 
 	return showDialog(env, s.TeamID, s.TriggerID, dialog)
@@ -95,8 +85,7 @@ func sendChallengeDialog(triggerID string, challengeName string) slack.Dialog {
 		SubmitLabel:    "Send",
 		NotifyOnCancel: false,
 		State:          challengeName,
-		// State:          state.string(),
-		Elements: elements,
+		Elements:       elements,
 	}
 }
 
@@ -118,7 +107,6 @@ func newChallengeDialog(triggerID string) slack.Dialog {
 		Title:          "New Coding Challenge",
 		SubmitLabel:    "Create",
 		NotifyOnCancel: false,
-		// State:          state.string(),
-		Elements: elements,
+		Elements:       elements,
 	}
 }

@@ -63,7 +63,6 @@ func handleBlockActions(env config.Environment, icb slack.InteractionCallback, r
 
 	// log.Println("State of message = ", icb.State)
 	// log.Printf("Message Response URL %s", icb.ResponseURL)
-	// log.Printf("Block actions %s", icb.ActionCallback.BlockActions)
 	// log.Printf("Action ID of first %s", icb.ActionCallback.BlockActions[0].ActionID)
 	// log.Printf("Action Text of first %s", icb.ActionCallback.BlockActions[0].Text)
 	// log.Printf("Action Value of first %s", icb.ActionCallback.BlockActions[0].Value)
