@@ -15,7 +15,11 @@ If everything is already setup for you (as described in following stages), and a
 This section assumes that you have setup this application either [yourself](#Self-Host-Setup) or somebody else did it for you and you want to use it in your Slack workgroup. (Note that this app is currently not available for use publicly, it is still in development, but you can try self hosting it.)
 
 ### Register the Challenge Github App in your Github Account
-You will either get a link to install this app (because somebody else is doing the hosting and sent you the link), or you are self hosting this app as your own private app. Either case you need to register this app to your Github account to be able to start using it.
+You can use any Github account (personal or organization) to create challenge repositories. Personal accounts can have unlimited private accounts but they come with the restriction of having up to 3 contributors/repository only. This app always creates the challenge repositories as private repositories since you most likely don't want other candidates to see each other's code.
+
+Before you can use your Github account, you need to install this app to your account. You will either get a link to install this app (because somebody else is doing the hosting and sent you the link), or you are self hosting this app as your own private app. Either case you need to register this app to your Github account to be able to start using it. 
+
+
 
 Once you install it (by clicking on the link on the provided URL), the app should be seen as below in your Github account:
 
@@ -26,11 +30,21 @@ The app installation will take you to a next step, where you need to also author
 ![User OAuth Registration](docs/github-user-oauth.png)
 
 ### Register the Challenge App in Slack
-You also need to register the app in your Slack workspace to start using the / commands from Slack.
+You also need to register the app in your Slack workspace to start using the / commands from Slack. 
 
 Below is how you can add the app to your workspace:
 
 ![Add App to Slack](docs/slack-add-app.png)
+
+Keep in mind that your Slack organization administrator might have disabled installing apps except for users with admin privileges. In that case you will get an error like below:
+
+![Slack Install Error](docs/error-slack-install.png)
+
+In that case, you need to ask your admininstrator to install the app for you to your Slack workgroup. You will need to send the following link to start the installation flow as the Slack app is not available in the directory of Slack apps.
+
+```
+http://YOURDOMAIN.WHERE.THIS.RUNS/auth/slack/install.html
+```
 
 ### Create a new challenge template in Github
 In order to start the process, you need to first create a repo that contains your challenge template in the Github account you registered the app with - [see previous section](#Register-the-Challenge-Github-App-in-your-Github-Account). In the repo you can include anything you want as a starter for the challenge. This repo will then be replicated for the candidate as a starter one. Also you would want to make this repo a private one.
@@ -77,6 +91,80 @@ You can register reviewers to review coding challenges. In order to do that:
   * *Github Alias* Type in the github alias for the reviewer
   * *Challenge Name* Select from the drop-down the challenge name the reviewer will be able to review.
   * *Technology List* Add a comma delimited list of languages/technologies which the reviewer can evaluate. E.g. ruby,elixir 
+  * *Experience Level* Select the interviewing experience level of the reviewer. This goes from low, mid, high.
+  * *Bookings per Week* Select the maximum number of bookings per week allowed.
+
+### Edit the reviewer
+You can edit the reviewer information. 
+
+* Go to your Slack channel and type: (if you omit the @SLACKID, then you will be editing your own information)
+
+```
+  /reviewer edit @SLACKID
+```
+
+* You will be presented by the below dialog:
+
+![Edit Reviewer Dialog](docs/slack-edit-reviewer.png)
+
+*IMPORTANT* Keep in mind that currently due to the limitation in Slack App, Challenge App needs to be filled in, again otherwise it will overwrite the existing with no value.
+
+### Edit the reviewer schedule
+
+* Go to your Slack channel and type: (if you omit the @SLACKID, then you will be updating your own schedule)
+
+```
+  /reviewer schedule @SLACKID
+```
+
+* You will be presented by the below dialog:
+
+![Update Schedule Dialog](docs/slack-update-schedule-dialog.png)
+
+* You can pick the below options for the week of the year.
+  * *All Weeks* Means you will be setting your schedule for all weeks in the year. Unless you override this for a specific week, this will be your default schedule.
+  * *Week X - Month Day - Month Day* This options lets you override your default schedule for that given week.
+
+Once you pick an option, Slack will show you a grid of buttons to pick from:
+
+![Schedule Slots](docs/slack-schedule-slots.png)
+
+You tap/click on a button to toggle your availability for that slot. In the above example, the reviewer is available for ` Thursday: 16:30-18:30 ` slot
+
+### Find reviewers for a given week
+
+* Go to your Slack channel and type: 
+
+```
+  /reviewer find
+```
+
+* You will be presented by the below dialog:
+
+![Find Reviewers](docs/slack-find-reviewers.png)
+
+* In the above dialog:
+  * *Week of the Year* Specify which week you are looking the reviewers for.
+  * *Day of Week* Specify which day of the week you are looking the reviewers for.
+  * *Challenge Name* From the drop down menu, specify the name of the challenge the reviewers registered for.
+  * *Technology List* Specify the technology the reviewers can review the challenge for. (E.g. ruby, java ...)
+
+And based on the search parameters, you will get all available reviewers for that day of that week: (and pressing book/unbook button you can do the booking.)
+
+![Show Reviewers](docs/slack-book-reviewers.png)
+  
+### Show all bookings of a reviewer
+
+* Go to your slack channel and type: (if you omit the @SLACKID, then you will be seeing your own bookings)
+
+```
+  /reviewer bookings @SLACKID
+```
+
+* This will give the following response where you can update their booking info:
+
+![Show Bookings](docs/slack-show-bookings.png)
+
 
 ### Send a coding challenge
 In order to send a coding challenge, you can type in the below: (We recommend you to create a specific Slack channel for all the coding challenges you will be sending. If there are multiple challenges for different positions, it is better to create different channels for each in Slack)
