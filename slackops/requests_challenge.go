@@ -92,7 +92,7 @@ func sendChallenge(env config.Environment, challenge models.ChallengeSetup, cand
 		postMessage(env, teamID, targetChannel, toMsgOption(errorMsg))
 		return
 	}
-	postMessage(env, teamID, targetChannel, newChallengeSummary(candidate, challengeURL, challenge.TrackingIssuesURL()))
+	postMessage(env, teamID, targetChannel, renderChallengeSummary(candidate, challengeURL, challenge.TrackingIssuesURL()))
 }
 
 func handleNewChallenge(env config.Environment, icb slack.InteractionCallback) error {

@@ -1,7 +1,6 @@
 package slackops
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"regexp"
@@ -14,63 +13,10 @@ import (
 	"github.com/nlopes/slack"
 )
 
-func executeReviewerHelp(c command) error {
-	helpText := `
-{
-	"blocks": [
-		{
-			"type": "section", 
-			"text": {
-				"type": "mrkdwn",
-				"text": "Hello and welcome to the coding challenge tool. You can use the following commands:"
-			} 
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "*/reviewer help* : Displays this message"
-			}
-		}, 
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "*/reviewer new* : Opens a dialog to register a reviewer"
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "*/reviewer edit @SLACKID* : Opens a dialog to edit the reviewer you specified with SLACKID. If SLACKID is omitted, it assumes you are the reviewer."
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "*/reviewer find* : Opens a dialog to find reviewers and book them"
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "*/reviewer schedule @SLACKID* : Opens a dialog to setup a reviewer schedule for all weeks or a specific week. If SLACKID is omitted, assumes you are the reviewer."
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "*/reviewer bookings @SLACKID* : Shows all active bookings for the reviewer with SLACKID. If SLACKID is omitted, assumes you are the reviewer."
-			}
-		}
-	]
-}
-`
-	err := sendDelayedResponse(c.slashCommand.ResponseURL, helpText)
+func executeReviewerHelp(env config.Environment, c command) error {
+	s := c.slashCommand
+
+	err := postMessage(env, s.TeamID, s.ChannelID, renderReviewerHelp())
 	return err
 }
 
@@ -325,18 +271,6 @@ func executeShowBookings(env config.Environment, c command) error {
 	}
 
 	sections := renderBookings(reviewer, challenge)
-	msg := sectionMsg{
-		ReplaceOriginal: false,
-		Blocks:          sections,
-	}
 
-	respJSON, err := json.Marshal(msg)
-	if err != nil {
-		log.Println("[ERROR] Cannot marshal the json response - ", err)
-		return err
-	}
-	// log.Println(string(respJSON))
-
-	sendDelayedResponse(s.ResponseURL, string(respJSON))
-	return nil
+	return postMessage(env, s.TeamID, s.ChannelID, slack.MsgOptionBlocks(sections...))
 }

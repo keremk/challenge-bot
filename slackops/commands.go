@@ -28,13 +28,11 @@ func ExecuteCommand(env config.Environment, request *http.Request) error {
 
 	switch c.mainCommand {
 	case "/challenge":
-		log.Println("[INFO] Challenge command is invoked")
 		fallthrough
 	case "/challengetest":
 		switch c.subCommand {
 		case "help":
-			log.Println("[INFO] HELP is called here")
-			go executeChallengeHelp(c)
+			go executeChallengeHelp(env, c)
 		case "new":
 			go executeNewChallenge(env, c)
 		case "send":
@@ -45,8 +43,7 @@ func ExecuteCommand(env config.Environment, request *http.Request) error {
 	case "/reviewertest":
 		switch c.subCommand {
 		case "help":
-			log.Println("[INFO] HELP is called here")
-			go executeReviewerHelp(c)
+			go executeReviewerHelp(env, c)
 		case "new":
 			go executeNewReviewer(env, c)
 		case "edit":
@@ -147,6 +144,6 @@ func newStaticOptionsDialogInput(name, label, value string, optional bool, optio
 		},
 		DataSource: slack.DialogDataSourceStatic,
 		Options:    options,
-		Value: 			value,
+		Value:      value,
 	}
 }

@@ -131,14 +131,3 @@ func payloadContents(readCloser io.ReadCloser) (string, error) {
 func toMsgOption(text string) slack.MsgOption {
 	return slack.MsgOptionText(text, false)
 }
-
-func postMessage(env config.Environment, teamID string, targetChannel string, msgOption slack.MsgOption) error {
-	token, err := getBotToken(env, teamID)
-	if err != nil {
-		return err
-	}
-
-	slackClient := slack.New(token)
-	slackClient.PostMessage(targetChannel, msgOption)
-	return nil
-}

@@ -1,7 +1,6 @@
 package slackops
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -129,11 +128,11 @@ func handleUpdateSchedule(env config.Environment, icb slack.InteractionCallback,
 		return err
 	}
 
-	updateSchedule(env, icb.Team.ID, icb.Channel.ID, icb.ResponseURL, slotChecked, scheduleInfo)
+	updateSchedule(env, icb.Team.ID, icb.Channel.ID, icb.Message.Timestamp, icb.ResponseURL, slotChecked, scheduleInfo)
 	return nil
 }
 
-func updateSchedule(env config.Environment, teamID, channelID, responseURL string, slotChecked bool, scheduleInfo scheduleActionInfo) {
+func updateSchedule(env config.Environment, teamID, channelID, messageTs, responseURL string, slotChecked bool, scheduleInfo scheduleActionInfo) {
 	reviewer, err := models.GetReviewerBySlackID(env, scheduleInfo.ReviewerID)
 	if err != nil {
 		log.Println("[ERROR] No such reviewer registered.", err)
@@ -168,18 +167,15 @@ func updateSchedule(env config.Environment, teamID, channelID, responseURL strin
 	slots := scheduling.SlotsForWeek(scheduleInfo.WeekNo, scheduleInfo.Year, reviewer, challenge)
 	scheduleMsgBlock := renderSchedule(scheduleInfo.WeekNo, scheduleInfo.Year, reviewer, slots)
 
-	updateMsg := updateMsg{
-		ReplaceOriginal: true,
-		Blocks:          []slack.ActionBlock{scheduleMsgBlock},
-	}
+	msg := slack.MsgOptionBlocks(&scheduleMsgBlock)
 
-	respJSON, err := json.Marshal(updateMsg)
-	if err != nil {
-		log.Println("[ERROR] Cannot marshal the json response - ", err)
-	}
+	updateMessage(env, teamID, channelID, messageTs, msg)
+
+	// respJSON, err := json.Marshal(scheduleMsgBlock)
+	// if err != nil {
+	// 	log.Println("[ERROR] Cannot marshal the json response - ", err)
+	// }
 	// log.Println(string(respJSON))
-
-	sendDelayedResponse(responseURL, string(respJSON))
 }
 
 func handleFindReviewers(env config.Environment, icb slack.InteractionCallback) error {

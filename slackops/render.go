@@ -3,9 +3,7 @@ package slackops
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/keremk/challenge-bot/models"
@@ -13,7 +11,38 @@ import (
 	"github.com/nlopes/slack"
 )
 
-func newChallengeSummary(candidate models.Candidate, challengeURL string, trackingIssuesURL string) slack.MsgOption {
+func renderChallengeHelp() slack.MsgOption {
+	help := `
+Hello and welcome to the coding challenge tool. You can use the following commands:
+*/challenge help* : Displays this message
+*/challenge new* : Opens a dialog to create a new challenge
+*/challenge send* : Opens a dialog to send a challenge to a candidate
+`
+	return renderHelp(help)
+}
+
+func renderReviewerHelp() slack.MsgOption {
+	help := `
+Hello and welcome to the coding challenge tool. You can use the following commands:	
+*/reviewer help* : Displays this message
+*/reviewer new* : Opens a dialog to register a reviewer
+*/reviewer edit @SLACKID* : Opens a dialog to edit the reviewer you specified with SLACKID. If SLACKID is omitted, it assumes you are the reviewer
+*/reviewer find* : Opens a dialog to find reviewers and book them
+*/reviewer schedule @SLACKID* : Opens a dialog to setup a reviewer schedule for all weeks or a specific week. If SLACKID is omitted, assumes you are the reviewer
+*/reviewer bookings @SLACKID* : Shows all active bookings for the reviewer with SLACKID. If SLACKID is omitted, assumes you are the reviewer
+`
+	return renderHelp(help)
+}
+
+func renderHelp(text string) slack.MsgOption {
+	helpTextBlock := slack.NewTextBlockObject("mrkdwn", text, false, false)
+	helpSection := slack.NewSectionBlock(helpTextBlock, nil, nil)
+	return slack.MsgOptionBlocks(
+		helpSection,
+	)
+}
+
+func renderChallengeSummary(candidate models.Candidate, challengeURL string, trackingIssuesURL string) slack.MsgOption {
 	// Header Section
 	headerText := fmt.Sprintf("You have created a new coding challenge at:\n*<%s|%s>*", challengeURL, challengeURL)
 	headerTextBlock := slack.NewTextBlockObject("mrkdwn", headerText, false, false)
@@ -188,18 +217,4 @@ func newActionBlock(blockID string, elements []slack.BlockElement) slack.ActionB
 			ElementSet: elements,
 		},
 	}
-}
-
-func sendDelayedResponse(url string, json string) error {
-	client := &http.Client{
-		Timeout: time.Second * 10,
-	}
-
-	body := strings.NewReader(json)
-	_, err := client.Post(url, "application/json", body)
-	if err != nil {
-		log.Println("[ERROR] Failed to send delayed response")
-		return err
-	}
-	return nil
 }

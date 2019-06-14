@@ -5,42 +5,10 @@ import (
 	"github.com/nlopes/slack"
 )
 
-func executeChallengeHelp(c command) error {
-	helpText := `
-{
-	"blocks": [
-		{
-			"type": "section", 
-			"text": {
-				"type": "mrkdwn",
-				"text": "Hello and welcome to the coding challenge tool. You can use the following commands:"
-			} 
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "*/challenge help* : Displays this message"
-			}
-		}, 
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "*/challenge new* : Opens a dialog to create a new challenge"
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "*/challenge send* : Opens a dialog to send a challenge to a candidate"
-			}
-		}
-	]
-}
-`
-	err := sendDelayedResponse(c.slashCommand.ResponseURL, helpText)
+func executeChallengeHelp(env config.Environment, c command) error {
+	s := c.slashCommand
+
+	err := postMessage(env, s.TeamID, s.ChannelID, renderChallengeHelp())
 	return err
 }
 
