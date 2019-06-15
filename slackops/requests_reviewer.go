@@ -77,7 +77,7 @@ func (r request) showSchedule(week, year int, reviewerSlackID string) {
 		return
 	}
 
-	challenge, err := models.GetChallengeSetup(r.ctx.Env, reviewer.ChallengeName)
+	challenge, err := models.GetChallengeSetupByName(r.ctx.Env, reviewer.ChallengeName)
 	if err != nil {
 		log.Println("[ERROR] Reviewer did not register to a challenge.", err)
 		errorMsg := fmt.Sprintf("Reviewer <%s> did not register for a specific challenge.", reviewer.Name)
@@ -135,7 +135,7 @@ func (r request) updateSchedule(slotChecked bool, scheduleInfo scheduleActionInf
 	}
 	// log.Println("[INFO] Reviewer is - ", reviewer)
 
-	challenge, err := models.GetChallengeSetup(r.ctx.Env, reviewer.ChallengeName)
+	challenge, err := models.GetChallengeSetupByName(r.ctx.Env, reviewer.ChallengeName)
 	if err != nil {
 		log.Println("[ERROR] Reviewer did not register to a challenge.", err)
 		errorMsg := fmt.Sprintf("Reviewer <%s> did not register for a specific challenge.", reviewer.Name)

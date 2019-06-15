@@ -8,6 +8,7 @@ import (
 )
 
 type ChallengeSetup struct {
+	ID              string
 	Name            string
 	GithubOwner     string
 	GithubOrg       string
@@ -18,18 +19,32 @@ type ChallengeSetup struct {
 	Slots           map[SlotID]*Slot
 }
 
-func GetChallengeSetup(env config.Environment, name string) (ChallengeSetup, error) {
-	challenge, err := getChallenge(env, name)
+func GetChallengeSetupByID(env config.Environment, id string) (ChallengeSetup, error) {
+	challenge, err := getChallengeByID(env, id)
 	if err != nil {
 		return ChallengeSetup{}, err
 	}
 
+	return getChallengeSetup(env, challenge)
+}
+
+func GetChallengeSetupByName(env config.Environment, name string) (ChallengeSetup, error) {
+	challenge, err := getChallengeByName(env, name)
+	if err != nil {
+		return ChallengeSetup{}, err
+	}
+
+	return getChallengeSetup(env, challenge)
+}
+
+func getChallengeSetup(env config.Environment, challenge Challenge) (ChallengeSetup, error) {
 	account, err := GetGithubAccount(env, challenge.GithubAccountName)
 	if err != nil {
 		return ChallengeSetup{}, err
 	}
 
 	return ChallengeSetup{
+		ID:              challenge.ID,
 		Name:            challenge.Name,
 		GithubOwner:     account.Owner,
 		GithubOrg:       account.Org,

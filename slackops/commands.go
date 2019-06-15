@@ -52,6 +52,8 @@ func ExecuteCommand(env config.Environment, request *http.Request) error {
 			go c.executeChallengeHelp()
 		case "new":
 			go c.executeNewChallenge()
+		case "edit":
+			go c.executeEditChallenge()
 		case "send":
 			go c.executeSendChallenge()
 		}

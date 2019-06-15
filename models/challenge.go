@@ -33,9 +33,12 @@ type Challenge struct {
 }
 
 func NewChallenge(input map[string]string) Challenge {
+	name := input["challenge_name"]
+	id := fmt.Sprintf("%s-%s", name, util.RandomString(8))
+
 	return Challenge{
-		ID:                util.RandomString(16),
-		Name:              input["challenge_name"],
+		ID:                id,
+		Name:              name,
 		GithubAccountName: input["github_account"],
 		TemplateRepo:      input["template_repo"],
 		RepoNameFormat:    input["repo_name_format"],
@@ -43,7 +46,24 @@ func NewChallenge(input map[string]string) Challenge {
 	}
 }
 
-func getChallenge(env config.Environment, name string) (Challenge, error) {
+func EditChallenge(env config.Environment, input map[string]string, challengeID string) (Challenge, error) {
+	challenge, err := getChallengeByID(env, challengeID)
+	if err != nil {
+		return Challenge{}, err
+	}
+
+	return Challenge{
+		ID:                challengeID,
+		Name:              input["challenge_name"],
+		GithubAccountName: input["github_account"],
+		TemplateRepo:      input["template_repo"],
+		RepoNameFormat:    input["repo_name_format"],
+		CreatedByTeamID:   input["team_id"],
+		Slots:             challenge.Slots,
+	}, nil
+}
+
+func getChallengeByName(env config.Environment, name string) (Challenge, error) {
 	challenge := Challenge{}
 	store, err := db.NewStore(env, db.SettingsCollection)
 	if err != nil {
@@ -51,6 +71,17 @@ func getChallenge(env config.Environment, name string) (Challenge, error) {
 	}
 
 	err = store.FindFirst("Name", name, &challenge)
+	return challenge, err
+}
+
+func getChallengeByID(env config.Environment, id string) (Challenge, error) {
+	challenge := Challenge{}
+	store, err := db.NewStore(env, db.SettingsCollection)
+	if err != nil {
+		return challenge, err
+	}
+
+	err = store.FindByID(id, &challenge)
 	return challenge, err
 }
 

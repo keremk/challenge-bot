@@ -248,7 +248,7 @@ func (c command) executeShowBookings() error {
 		c.ctx.postMessage(c.slashCmd.ChannelID, toMsgOption(errorMsg))
 		return err
 	}
-	challenge, err := models.GetChallengeSetup(c.ctx.Env, reviewer.ChallengeName)
+	challenge, err := models.GetChallengeSetupByName(c.ctx.Env, reviewer.ChallengeName)
 	if err != nil {
 		log.Println("[ERROR] Invalid challenge for reviewer", err)
 		errorMsg := fmt.Sprintf("Reviewer <@%s> does not seem to have a valid challenge they registered. Please use /reviewer edit to register a challenge.", reviewerSlackID)

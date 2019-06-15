@@ -59,6 +59,8 @@ func (r request) handleDialogSubmission() error {
 		err = r.handleSendChallenge()
 	case "new_challenge":
 		err = r.handleNewChallenge()
+	case "edit_challenge":
+		err = r.handleEditChallenge()
 	case "new_reviewer":
 		err = r.handleNewReviewer()
 	case "edit_reviewer":

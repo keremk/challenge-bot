@@ -123,7 +123,7 @@ func newSlotAvailability(slot *models.Slot) *SlotAvailability {
 }
 
 func FindAvailableReviewers(env config.Environment, challengeName string, tech string, weekNo, year int) (map[DayOfWeek]map[string]*SlotAvailability, error) {
-	challenge, err := models.GetChallengeSetup(env, challengeName)
+	challenge, err := models.GetChallengeSetupByName(env, challengeName)
 	if err != nil {
 		log.Println("[ERROR] Cannot find the challenge setup - ", challengeName)
 		return nil, err

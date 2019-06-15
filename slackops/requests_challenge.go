@@ -16,7 +16,7 @@ func (r request) handleSendChallenge() error {
 		return err
 	}
 
-	challenge, err := models.GetChallengeSetup(r.ctx.Env, candidate.ChallengeName)
+	challenge, err := models.GetChallengeSetupByName(r.ctx.Env, candidate.ChallengeName)
 	if err != nil {
 		return err
 	}
@@ -96,19 +96,32 @@ func (r request) handleNewChallenge() error {
 	challengeInput := r.icb.Submission
 	challengeInput["team_id"] = r.icb.Team.ID
 
-	go r.createNewChallenge(challengeInput)
+	challenge := models.NewChallenge(challengeInput)
+	go r.updateChallenge(challenge)
 	return nil
 }
 
-func (r request) createNewChallenge(params map[string]string) {
-	challenge := models.NewChallenge(params)
+func (r request) handleEditChallenge() error {
+	challengeInput := r.icb.Submission
+	challengeInput["team_id"] = r.icb.Team.ID
+	challengeID := r.icb.State
+
+	challenge, err := models.EditChallenge(r.ctx.Env, challengeInput, challengeID)
+	if err != nil {
+		return err
+	}
+	go r.updateChallenge(challenge)
+	return nil
+}
+
+func (r request) updateChallenge(challenge models.Challenge) {
 	err := models.UpdateChallenge(r.ctx.Env, challenge)
 	if err != nil {
 		log.Println("[ERROR] Could not update challenge in db ", err)
 		r.ctx.postMessage(r.icb.Channel.ID, toMsgOption("We were not able to create the new challenge"))
 	}
 
-	challengeSetup, err := models.GetChallengeSetup(r.ctx.Env, challenge.Name)
+	challengeSetup, err := models.GetChallengeSetupByName(r.ctx.Env, challenge.Name)
 	if err != nil {
 		log.Println("[ERROR] Could not create a valid challenge setup, perhaps the github repo name is not valid ", err)
 		r.ctx.postMessage(r.icb.Channel.ID, toMsgOption("We were not able to create a valid challenge"))

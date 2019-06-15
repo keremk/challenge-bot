@@ -31,6 +31,8 @@ func HandleOptions(env config.Environment, readCloser io.ReadCloser) ([]byte, er
 	case "send_challenge":
 		respJSON, err := handleSendChallengeOptions(env, icb)
 		return respJSON, err
+	case "edit_challenge":
+		fallthrough
 	case "new_challenge":
 		respJSON, err := handleNewChallengeOptions(env, icb)
 		return respJSON, err
