@@ -16,6 +16,7 @@ func renderChallengeHelp() slack.MsgOption {
 Hello and welcome to the coding challenge tool. You can use the following commands:
 */challenge help* : Displays this message
 */challenge new* : Opens a dialog to create a new challenge
+*/challenge edit CHALLENGENAME* : Edits the challenge with the name CHALLENGENAME
 */challenge send* : Opens a dialog to send a challenge to a candidate
 `
 	return renderHelp(help)

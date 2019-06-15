@@ -73,6 +73,21 @@ Before sending a new challenge, you need to register the challenge template into
   * *Github Account Name* Specify the Github account the challenge repos (and their templates) will be (are) stored.  
 * And once you are comfortable tap `Create` button. This will register the coding challenge template.
 
+### Edit the challenge template
+You can also edit the challenge template you created.
+
+* Go to your Slack channel and type:
+
+```
+  /challenge edit CHALLENGENAME
+```
+
+* You will be presented by the below dialog:
+
+![Challenge New Dialog](docs/slack-new-challenge.png)
+
+And edit as in new registration.
+
 ### Register a reviewer
 You can register reviewers to review coding challenges. In order to do that:
 
