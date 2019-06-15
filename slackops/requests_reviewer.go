@@ -5,19 +5,18 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/keremk/challenge-bot/config"
 	"github.com/keremk/challenge-bot/models"
 	"github.com/keremk/challenge-bot/scheduling"
 
 	"github.com/nlopes/slack"
 )
 
-func handleNewReviewer(env config.Environment, icb slack.InteractionCallback) error {
-	addReviewerInput := icb.Submission
+func (r request) handleNewReviewer() error {
+	addReviewerInput := r.icb.Submission
 	// log.Println("[INFO] Reviewer data", addReviewerInput)
 	reviewerSlackID := addReviewerInput["reviewer_id"]
 
-	user, err := getUserInfo(env, reviewerSlackID, icb.Team.ID)
+	user, err := r.ctx.getUserInfo(reviewerSlackID)
 	if err != nil {
 		return err
 	}
@@ -25,64 +24,64 @@ func handleNewReviewer(env config.Environment, icb slack.InteractionCallback) er
 	reviewer := models.NewReviewer(user.Name, addReviewerInput)
 	// log.Println("[INFO] Reviewer is ", reviewer)
 
-	err = models.UpdateReviewer(env, reviewer)
+	err = models.UpdateReviewer(r.ctx.Env, reviewer)
 	if err != nil {
 		log.Println("[ERROR] Could not update reviewer in db ", err)
-		postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption("We were not able to create the new reviewer"))
+		r.ctx.postMessage(r.icb.Channel.ID, toMsgOption("We were not able to create the new reviewer"))
 		return err
 	}
 
-	msgText := fmt.Sprintf("We created a reviewer named %s in our database. They will be reviewing: %s, and their Github alias is: %s", reviewer.Name, reviewer.ChallengeName, reviewer.GithubAlias)
-	postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption(msgText))
+	msgText := fmt.Sprintf("We created a reviewer <@%s> in our database. They will be reviewing: %s, and their Github alias is: %s", reviewer.SlackID, reviewer.ChallengeName, reviewer.GithubAlias)
+	r.ctx.postMessage(r.icb.Channel.ID, toMsgOption(msgText))
 	return nil
 }
 
-func handleEditReviewer(env config.Environment, icb slack.InteractionCallback) error {
-	reviewer, err := models.EditReviewer(env, icb.State, icb.Submission)
+func (r request) handleEditReviewer() error {
+	reviewer, err := models.EditReviewer(r.ctx.Env, r.icb.State, r.icb.Submission)
 	// log.Println("[INFO] Reviewer is ", reviewer)
 
 	if err != nil {
 		log.Println("[ERROR] Could not update reviewer in db ", err)
-		postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption("We were not able to create the new reviewer"))
+		r.ctx.postMessage(r.icb.Channel.ID, toMsgOption("We were not able to create the new reviewer"))
 		return err
 	}
 
-	msgText := fmt.Sprintf("We edited the reviewer named %s in our database.", reviewer.Name)
-	postMessage(env, icb.Team.ID, icb.Channel.ID, toMsgOption(msgText))
+	msgText := fmt.Sprintf("We edited the reviewer <@%s> in our database.", reviewer.SlackID)
+	r.ctx.postMessage(r.icb.Channel.ID, toMsgOption(msgText))
 	return nil
 }
 
-func handleShowSchedule(env config.Environment, icb slack.InteractionCallback) error {
-	scheduleInput := icb.Submission
+func (r request) handleShowSchedule() error {
+	scheduleInput := r.icb.Submission
 	log.Println("[INFO] Reviewer data", scheduleInput)
 
 	week, year := decodeWeekAndYear(scheduleInput["year_week"])
 	log.Println("[INFO] Week ", week)
 
-	reviewerSlackID := icb.State
+	reviewerSlackID := r.icb.State
 	log.Println("[INFO] Reviewer ID", reviewerSlackID)
 
-	go showSchedule(env, week, year, reviewerSlackID, icb.Team.ID, icb.Channel.ID)
+	go r.showSchedule(week, year, reviewerSlackID)
 
 	return nil
 }
 
-func showSchedule(env config.Environment, week, year int, reviewerSlackID, teamID, channelID string) {
-	reviewer, err := models.GetReviewerBySlackID(env, reviewerSlackID)
+func (r request) showSchedule(week, year int, reviewerSlackID string) {
+	reviewer, err := models.GetReviewerBySlackID(r.ctx.Env, reviewerSlackID)
 	// log.Println("INFO: Reviewer - ", reviewer)
 	// log.Println("INFO: Error - ", err)
 	if err != nil {
 		log.Println("[ERROR] No such reviewer registered.", err)
 		errorMsg := fmt.Sprintf("Reviewer <@%s> is not registered. Please register first using /reviewer new command.", reviewerSlackID)
-		postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+		r.ctx.postMessage(r.icb.Channel.ID, toMsgOption(errorMsg))
 		return
 	}
 
-	challenge, err := models.GetChallengeSetup(env, reviewer.ChallengeName)
+	challenge, err := models.GetChallengeSetup(r.ctx.Env, reviewer.ChallengeName)
 	if err != nil {
 		log.Println("[ERROR] Reviewer did not register to a challenge.", err)
 		errorMsg := fmt.Sprintf("Reviewer <%s> did not register for a specific challenge.", reviewer.Name)
-		postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+		r.ctx.postMessage(r.icb.Channel.ID, toMsgOption(errorMsg))
 		return
 	}
 
@@ -97,61 +96,56 @@ func showSchedule(env config.Environment, week, year int, reviewerSlackID, teamI
 	}
 
 	headerMsgText := fmt.Sprintf("<@%s>'s schedule in %s", reviewer.SlackID, weekDescription)
-	err = postMessage(env, teamID, channelID, toMsgOption(headerMsgText))
+	err = r.ctx.postMessage(r.icb.Channel.ID, toMsgOption(headerMsgText))
 	if err != nil {
 		log.Println("[ERROR] Cannot send the reviewer schedule header - ", err)
 		return
 	}
 
 	scheduleMsgBlock := renderSchedule(week, year, reviewer, slots)
-	err = postMessage(env, teamID, channelID, slack.MsgOptionBlocks(&scheduleMsgBlock))
+	err = r.ctx.postMessage(r.icb.Channel.ID, slack.MsgOptionBlocks(&scheduleMsgBlock))
 	if err != nil {
 		log.Println("[ERROR] Cannot send the reviewer schedule details - ", err)
 	}
 }
 
-type updateMsg struct {
-	ReplaceOriginal bool                `json:"replace_original,omitempty"`
-	Blocks          []slack.ActionBlock `json:"blocks,omitempty"`
-}
-
-func handleUpdateSchedule(env config.Environment, icb slack.InteractionCallback, encodedActionInfo string) error {
+func (r request) handleUpdateSchedule(encodedActionInfo string) error {
 	scheduleInfo, err := decodeScheduleActionInfo(encodedActionInfo)
 	if err != nil {
 		log.Println("[ERROR] Cannot decode schedule info - ", err)
 		return err
 	}
 
-	slotChecked, err := strconv.ParseBool(icb.ActionCallback.BlockActions[0].Value)
+	slotChecked, err := strconv.ParseBool(r.icb.ActionCallback.BlockActions[0].Value)
 	if err != nil {
 		log.Println("[ERROR] value not properly encoded ", err)
 		return err
 	}
 
-	updateSchedule(env, icb.Team.ID, icb.Channel.ID, icb.Message.Timestamp, icb.ResponseURL, slotChecked, scheduleInfo)
+	r.updateSchedule(slotChecked, scheduleInfo)
 	return nil
 }
 
-func updateSchedule(env config.Environment, teamID, channelID, messageTs, responseURL string, slotChecked bool, scheduleInfo scheduleActionInfo) {
-	reviewer, err := models.GetReviewerBySlackID(env, scheduleInfo.ReviewerID)
+func (r request) updateSchedule(slotChecked bool, scheduleInfo scheduleActionInfo) {
+	reviewer, err := models.GetReviewerBySlackID(r.ctx.Env, scheduleInfo.ReviewerID)
 	if err != nil {
 		log.Println("[ERROR] No such reviewer registered.", err)
 		errorMsg := fmt.Sprintf("Reviewer <%s> is not registered.", scheduleInfo.ReviewerID)
-		postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+		r.ctx.postMessage(r.icb.Channel.ID, toMsgOption(errorMsg))
 	}
 	// log.Println("[INFO] Reviewer is - ", reviewer)
 
-	challenge, err := models.GetChallengeSetup(env, reviewer.ChallengeName)
+	challenge, err := models.GetChallengeSetup(r.ctx.Env, reviewer.ChallengeName)
 	if err != nil {
 		log.Println("[ERROR] Reviewer did not register to a challenge.", err)
 		errorMsg := fmt.Sprintf("Reviewer <%s> did not register for a specific challenge.", reviewer.Name)
-		postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+		r.ctx.postMessage(r.icb.Channel.ID, toMsgOption(errorMsg))
 	}
 	// log.Println("[INFO] Challenge is - ", challenge)
 
 	slotChecked = !slotChecked
 
-	reviewer, err = scheduling.UpdateReviewerAvailability(env, reviewer, scheduling.SlotReference{
+	reviewer, err = scheduling.UpdateReviewerAvailability(r.ctx.Env, reviewer, scheduling.SlotReference{
 		SlotID:    scheduleInfo.SlotID,
 		WeekNo:    scheduleInfo.WeekNo,
 		Year:      scheduleInfo.Year,
@@ -160,7 +154,7 @@ func updateSchedule(env config.Environment, teamID, channelID, messageTs, respon
 	if err != nil {
 		log.Println("[ERROR] Update availability not successful - ", err)
 		errorMsg := fmt.Sprintf("There was an error. Availability cannot be updated.")
-		postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+		r.ctx.postMessage(r.icb.Channel.ID, toMsgOption(errorMsg))
 	}
 	// log.Println("[INFO] Updated reviewer is - ", reviewer)
 
@@ -169,7 +163,7 @@ func updateSchedule(env config.Environment, teamID, channelID, messageTs, respon
 
 	msg := slack.MsgOptionBlocks(&scheduleMsgBlock)
 
-	updateMessage(env, teamID, channelID, messageTs, msg)
+	r.ctx.updateMessage(r.icb.Channel.ID, r.icb.Message.Timestamp, msg)
 
 	// respJSON, err := json.Marshal(scheduleMsgBlock)
 	// if err != nil {
@@ -178,25 +172,25 @@ func updateSchedule(env config.Environment, teamID, channelID, messageTs, respon
 	// log.Println(string(respJSON))
 }
 
-func handleFindReviewers(env config.Environment, icb slack.InteractionCallback) error {
-	scheduleInput := icb.Submission
-	log.Println("[INFO] Reviewer data", scheduleInput)
+func (r request) handleFindReviewers() error {
+	scheduleInput := r.icb.Submission
+	// log.Println("[INFO] Reviewer data", scheduleInput)
 
 	week, year := decodeWeekAndYear(scheduleInput["year_week"])
 	day := scheduleInput["day"]
-	log.Println("[INFO] Day ", day)
-	log.Println("[INFO] Week ", week)
+	// log.Println("[INFO] Day ", day)
+	// log.Println("[INFO] Week ", week)
 
 	challengeName := scheduleInput["challenge_name"]
 	technology := scheduleInput["technology"]
 
-	go findAvailableReviewers(env, challengeName, technology, day, week, year, icb.Team.ID, icb.Channel.ID)
+	go r.findAvailableReviewers(challengeName, technology, day, week, year)
 
 	return nil
 }
 
-func findAvailableReviewers(env config.Environment, challengeName, technology, day string, week, year int, teamID, channelID string) {
-	availableReviewers, err := scheduling.FindAvailableReviewers(env, challengeName, technology, week, year)
+func (r request) findAvailableReviewers(challengeName, technology, day string, week, year int) {
+	availableReviewers, err := scheduling.FindAvailableReviewers(r.ctx.Env, challengeName, technology, week, year)
 	if err != nil {
 		log.Println("[ERROR] Found no results", err)
 	}
@@ -204,41 +198,41 @@ func findAvailableReviewers(env config.Environment, challengeName, technology, d
 	scheduleInfo := availableReviewers[day]
 	if scheduleInfo == nil {
 		errorMsg := fmt.Sprintf("No reviewers available for %s on the week of %d, %d", day, week, year)
-		postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+		r.ctx.postMessage(r.icb.Channel.ID, toMsgOption(errorMsg))
 	}
 	scheduleMsg := renderReviewers(week, year, scheduleInfo)
 
-	postMessage(env, teamID, channelID, scheduleMsg)
+	r.ctx.postMessage(r.icb.Channel.ID, scheduleMsg)
 }
 
-func handleBookings(env config.Environment, icb slack.InteractionCallback, encodedActionInfo string) error {
+func (r request) handleBookings(encodedActionInfo string) error {
 	scheduleInfo, err := decodeScheduleActionInfo(encodedActionInfo)
 	if err != nil {
 		log.Println("[ERROR] Cannot decode schedule info - ", err)
 		return err
 	}
 
-	isBooked, err := strconv.ParseBool(icb.ActionCallback.BlockActions[0].Value)
+	isBooked, err := strconv.ParseBool(r.icb.ActionCallback.BlockActions[0].Value)
 	if err != nil {
 		log.Println("[ERROR] value not properly encoded ", err)
 		return err
 	}
 
-	updateBooking(env, icb.Team.ID, icb.Channel.ID, icb.ResponseURL, isBooked, scheduleInfo)
+	r.updateBooking(isBooked, scheduleInfo)
 	return nil
 }
 
-func updateBooking(env config.Environment, teamID, channelID, responseURL string, isBooked bool, scheduleInfo scheduleActionInfo) {
-	reviewer, err := models.GetReviewerBySlackID(env, scheduleInfo.ReviewerID)
+func (r request) updateBooking(isBooked bool, scheduleInfo scheduleActionInfo) {
+	reviewer, err := models.GetReviewerBySlackID(r.ctx.Env, scheduleInfo.ReviewerID)
 	if err != nil {
 		log.Println("[ERROR] No such reviewer registered.", err)
 		errorMsg := fmt.Sprintf("Reviewer <%s> is not registered.", scheduleInfo.ReviewerID)
-		postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+		r.ctx.postMessage(r.icb.Channel.ID, toMsgOption(errorMsg))
 	}
 	// log.Println("[INFO] Reviewer is - ", reviewer)
 	isBooked = !isBooked // Toggle booking
 
-	reviewer, err = scheduling.UpdateReviewerBooking(env, reviewer, scheduling.SlotBooking{
+	reviewer, err = scheduling.UpdateReviewerBooking(r.ctx.Env, reviewer, scheduling.SlotBooking{
 		SlotID:   scheduleInfo.SlotID,
 		WeekNo:   scheduleInfo.WeekNo,
 		Year:     scheduleInfo.Year,
@@ -248,12 +242,12 @@ func updateBooking(env config.Environment, teamID, channelID, responseURL string
 		switch err.(type) {
 		case scheduling.MaxBookingsError:
 			errorMsg := fmt.Sprintf("Reviewer can only be booked a maximum of %d times/week. Please unbook another appointment in that week.", reviewer.BookingsPerWeek)
-			postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+			r.ctx.postMessage(r.icb.Channel.ID, toMsgOption(errorMsg))
 			return
 		default:
 			log.Println("[ERROR] Update booking not successful - ", err)
 			errorMsg := fmt.Sprintf("There was an error. Booking cannot be updated.")
-			postMessage(env, teamID, channelID, toMsgOption(errorMsg))
+			r.ctx.postMessage(r.icb.Channel.ID, toMsgOption(errorMsg))
 			return
 		}
 	}
@@ -264,5 +258,5 @@ func updateBooking(env config.Environment, teamID, channelID, responseURL string
 	} else {
 		msg = fmt.Sprintf("<@%s|%s> is now free for the slot %s on week %d", reviewer.SlackID, reviewer.Name, scheduleInfo.SlotID, scheduleInfo.WeekNo)
 	}
-	postMessage(env, teamID, channelID, toMsgOption(msg))
+	r.ctx.postMessage(r.icb.Channel.ID, toMsgOption(msg))
 }

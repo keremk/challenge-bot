@@ -16,17 +16,33 @@ import (
 
 const dreadedPrivateRepoError = "422 Visibility can't be private"
 
+type request struct {
+	ctx commCtx
+	icb *slack.InteractionCallback
+}
+
+func newRequest(env config.Environment, icb *slack.InteractionCallback) request {
+	ctx := newCommCtx(env, icb.User.ID, icb.Team.ID, false)
+
+	return request{
+		ctx: ctx,
+		icb: icb,
+	}
+}
+
 func HandleRequests(env config.Environment, readCloser io.ReadCloser) error {
 	icb, err := parseInteractionCallback(readCloser, env.VerificationToken)
 	if err != nil {
 		return err
 	}
 
+	r := newRequest(env, icb)
+
 	switch icb.Type {
 	case "dialog_submission":
-		err = handleDialogSubmission(env, icb)
+		err = r.handleDialogSubmission()
 	case "block_actions":
-		err = handleBlockActions(env, icb, readCloser)
+		err = r.handleBlockActions()
 	default:
 		err = errors.New("[ERROR] Unknown dialog response")
 		log.Println("[ERROR] Unknown dialog response - ", icb.CallbackID)
@@ -35,52 +51,44 @@ func HandleRequests(env config.Environment, readCloser io.ReadCloser) error {
 	return err
 }
 
-func handleDialogSubmission(env config.Environment, icb slack.InteractionCallback) error {
+func (r request) handleDialogSubmission() error {
 	var err error
 
-	switch icb.CallbackID {
+	switch r.icb.CallbackID {
 	case "send_challenge":
-		err = handleSendChallenge(env, icb)
+		err = r.handleSendChallenge()
 	case "new_challenge":
-		err = handleNewChallenge(env, icb)
+		err = r.handleNewChallenge()
 	case "new_reviewer":
-		err = handleNewReviewer(env, icb)
+		err = r.handleNewReviewer()
 	case "edit_reviewer":
-		err = handleEditReviewer(env, icb)
+		err = r.handleEditReviewer()
 	case "schedule_update":
-		err = handleShowSchedule(env, icb)
+		err = r.handleShowSchedule()
 	case "find_reviewers":
-		err = handleFindReviewers(env, icb)
+		err = r.handleFindReviewers()
 	default:
 		err = errors.New("[ERROR] Unknown CallbackID")
-		log.Println("[ERROR] Unknown CallbackID - ", icb.CallbackID)
+		log.Println("[ERROR] Unknown CallbackID - ", r.icb.CallbackID)
 	}
 	return err
 }
 
-func handleBlockActions(env config.Environment, icb slack.InteractionCallback, readCloser io.ReadCloser) error {
+func (r request) handleBlockActions() error {
 	var err error
 
-	// log.Println("State of message = ", icb.State)
-	// log.Printf("Message Response URL %s", icb.ResponseURL)
-	// log.Printf("Action ID of first %s", icb.ActionCallback.BlockActions[0].ActionID)
-	// log.Printf("Action Text of first %s", icb.ActionCallback.BlockActions[0].Text)
-	// log.Printf("Action Value of first %s", icb.ActionCallback.BlockActions[0].Value)
-	// log.Printf("Action Type of first %s", icb.ActionCallback.BlockActions[0].Type)
-	// log.Printf("Action BlockID of first %s", icb.ActionCallback.BlockActions[0].BlockID)
-
-	action, encodedActionInfo, err := decodeAction(icb.ActionCallback.BlockActions[0].ActionID)
-	log.Printf("Action %s, Encoded ActionInfo %s", action, encodedActionInfo)
+	action, encodedActionInfo, err := decodeAction(r.icb.ActionCallback.BlockActions[0].ActionID)
+	//log.Printf("Action %s, Encoded ActionInfo %s", action, encodedActionInfo)
 	if err != nil {
 		return err
 	}
 	switch action {
 	case scheduleUpdate:
-		err = handleUpdateSchedule(env, icb, encodedActionInfo)
+		err = r.handleUpdateSchedule(encodedActionInfo)
 	case showBookings:
 		fallthrough
 	case findReviewers:
-		err = handleBookings(env, icb, encodedActionInfo)
+		err = r.handleBookings(encodedActionInfo)
 	default:
 		err = errors.New("[ERROR] Unknown action")
 		log.Println("[ERROR] Unknown action - ", action)
@@ -88,25 +96,25 @@ func handleBlockActions(env config.Environment, icb slack.InteractionCallback, r
 	return err
 }
 
-func parseInteractionCallback(readCloser io.ReadCloser, verificationToken string) (slack.InteractionCallback, error) {
+func parseInteractionCallback(readCloser io.ReadCloser, verificationToken string) (*slack.InteractionCallback, error) {
 	payload, err := payloadContents(readCloser)
 	if err != nil {
-		return slack.InteractionCallback{}, err
+		return nil, err
 	}
 
 	var icb slack.InteractionCallback
 	err = json.Unmarshal([]byte(payload), &icb)
 	if err != nil {
 		log.Println("[ERROR] Unable to unmarshall json response", err)
-		return slack.InteractionCallback{}, err
+		return nil, err
 	}
 
 	if icb.Token != verificationToken {
 		log.Println("[ERROR] Unable to validate request ", err)
-		return slack.InteractionCallback{}, ValidationError{}
+		return nil, ValidationError{}
 	}
 
-	return icb, nil
+	return &icb, nil
 }
 
 func payloadContents(readCloser io.ReadCloser) (string, error) {

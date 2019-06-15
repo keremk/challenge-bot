@@ -11,10 +11,27 @@ import (
 )
 
 type command struct {
-	mainCommand  string
-	subCommand   string
-	arg          string
-	slashCommand *slack.SlashCommand
+	ctx      commCtx
+	command  string
+	sub      string
+	arg      string
+	slashCmd *slack.SlashCommand
+}
+
+func newCommand(env config.Environment, slashCommand *slack.SlashCommand) command {
+	sub, arg := parseSlashCommand(slashCommand)
+	if sub == "" {
+		sub = "help"
+	}
+	ctx := newCommCtx(env, slashCommand.UserID, slashCommand.TeamID, false)
+
+	return command{
+		ctx:      ctx,
+		command:  slashCommand.Command,
+		sub:      sub,
+		arg:      arg,
+		slashCmd: slashCommand,
+	}
 }
 
 func ExecuteCommand(env config.Environment, request *http.Request) error {
@@ -23,39 +40,39 @@ func ExecuteCommand(env config.Environment, request *http.Request) error {
 		return err
 	}
 
-	c := parseSlashCommand(slashCommand)
-	log.Printf("[INFO] Main Command %s, Sub Command %s, Text %s", c.mainCommand, c.subCommand, c.arg)
+	c := newCommand(env, slashCommand)
+	log.Printf("[INFO] Main Command %s, Sub Command %s, Text %s", c.command, c.sub, c.arg)
 
-	switch c.mainCommand {
+	switch c.command {
 	case "/challenge":
 		fallthrough
 	case "/challengetest":
-		switch c.subCommand {
+		switch c.sub {
 		case "help":
-			go executeChallengeHelp(env, c)
+			go c.executeChallengeHelp()
 		case "new":
-			go executeNewChallenge(env, c)
+			go c.executeNewChallenge()
 		case "send":
-			go executeSendChallenge(env, c)
+			go c.executeSendChallenge()
 		}
 	case "/reviewer":
 		fallthrough
 	case "/reviewertest":
-		switch c.subCommand {
+		switch c.sub {
 		case "help":
-			go executeReviewerHelp(env, c)
+			go c.executeReviewerHelp()
 		case "new":
-			go executeNewReviewer(env, c)
+			go c.executeNewReviewer()
 		case "edit":
-			go executeEditReviewer(env, c)
+			go c.executeEditReviewer()
 		case "schedule":
-			go executeSchedule(env, c)
+			go c.executeSchedule()
 		case "find":
-			go executeFindReviewers(env, c)
+			go c.executeFindReviewers()
 		case "bookings":
-			go executeShowBookings(env, c)
+			go c.executeShowBookings()
 		default:
-			log.Println("[ERROR] Unexpected Command ", c.mainCommand)
+			log.Println("[ERROR] Unexpected Command ", c.command)
 			return errors.New("Unexpected command")
 		}
 	}
@@ -76,50 +93,20 @@ func parsePayload(request *http.Request, verificationToken string) (*slack.Slash
 	return &s, nil
 }
 
-func parseSlashCommand(slashCommand *slack.SlashCommand) command {
-	helpCommand := command{
-		mainCommand:  slashCommand.Command,
-		subCommand:   "help",
-		arg:          "",
-		slashCommand: slashCommand,
-	}
-
+func parseSlashCommand(slashCommand *slack.SlashCommand) (string, string) {
 	if len(slashCommand.Text) == 0 {
-		return helpCommand
+		return "", ""
 	}
 
 	c := strings.Split(slashCommand.Text, " ")
 	switch len(c) {
 	case 1:
-		return command{
-			mainCommand:  slashCommand.Command,
-			subCommand:   c[0],
-			arg:          "",
-			slashCommand: slashCommand,
-		}
+		return c[0], ""
 	case 2:
-		return command{
-			mainCommand:  slashCommand.Command,
-			subCommand:   c[0],
-			arg:          c[1],
-			slashCommand: slashCommand,
-		}
+		return c[0], c[1]
 	default:
-		return helpCommand
+		return "", ""
 	}
-}
-
-func showDialog(env config.Environment, teamID, triggerID string, dialog slack.Dialog) error {
-	token, err := getBotToken(env, teamID)
-	if err != nil {
-		return err
-	}
-	slackClient := slack.New(token)
-	err = slackClient.OpenDialog(triggerID, dialog)
-	if err != nil {
-		log.Println("[ERROR] Cannot create the dialog ", err)
-	}
-	return err
 }
 
 func newExternalOptionsDialogInput(name, label, value string, optional bool) *slack.DialogInputSelect {

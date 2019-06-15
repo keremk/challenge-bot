@@ -7,47 +7,39 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/keremk/challenge-bot/config"
 	"github.com/keremk/challenge-bot/models"
 	"github.com/keremk/challenge-bot/scheduling"
 	"github.com/nlopes/slack"
 )
 
-func executeReviewerHelp(env config.Environment, c command) error {
-	s := c.slashCommand
-
-	err := postMessage(env, s.TeamID, s.ChannelID, renderReviewerHelp())
-	return err
+func (c command) executeReviewerHelp() error {
+	return c.ctx.postMessage(c.slashCmd.ChannelID, renderReviewerHelp())
 }
 
-func executeNewReviewer(env config.Environment, c command) error {
-	s := c.slashCommand
+func (c command) executeNewReviewer() error {
+	dialog := newAddReviewerDialog(c.slashCmd.TriggerID)
 
-	dialog := newAddReviewerDialog(s.TriggerID)
-
-	return showDialog(env, s.TeamID, s.TriggerID, dialog)
+	return c.ctx.showDialog(c.slashCmd.TriggerID, dialog)
 }
 
-func executeEditReviewer(env config.Environment, c command) error {
-	s := c.slashCommand
-
+func (c command) executeEditReviewer() error {
 	var reviewerSlackID string
 	if c.arg == "" {
-		reviewerSlackID = s.UserID
+		reviewerSlackID = c.slashCmd.UserID
 	} else {
 		reviewerSlackID = parseSlackIDFromString(c.arg)
 	}
-	reviewer, err := models.GetReviewerBySlackID(env, reviewerSlackID)
+	reviewer, err := models.GetReviewerBySlackID(c.ctx.Env, reviewerSlackID)
 	if err != nil {
 		log.Println("[ERROR] No such reviewer registered.", err)
 		errorMsg := fmt.Sprintf("Reviewer <@%s> is not registered. Please register first using /reviewer new command.", reviewerSlackID)
-		postMessage(env, s.TeamID, s.ChannelID, toMsgOption(errorMsg))
+		c.ctx.postMessage(c.slashCmd.ChannelID, toMsgOption(errorMsg))
 		return err
 	}
 
-	dialog := newEditReviewerDialog(s.TriggerID, reviewer)
+	dialog := newEditReviewerDialog(c.slashCmd.TriggerID, reviewer)
 
-	return showDialog(env, s.TeamID, s.TriggerID, dialog)
+	return c.ctx.showDialog(c.slashCmd.TriggerID, dialog)
 }
 
 func newAddReviewerDialog(triggerID string) slack.Dialog {
@@ -99,19 +91,17 @@ func reviewerDialogElements(reviewer models.Reviewer, editMode bool) []slack.Dia
 	)
 }
 
-func executeSchedule(env config.Environment, c command) error {
-	s := c.slashCommand
-
+func (c command) executeSchedule() error {
 	var reviewerSlackID string
 	if c.arg == "" {
-		reviewerSlackID = s.UserID
+		reviewerSlackID = c.slashCmd.UserID
 	} else {
 		reviewerSlackID = parseSlackIDFromString(c.arg)
 	}
 
-	dialog := newScheduleDialog(s.TriggerID, reviewerSlackID)
+	dialog := newScheduleDialog(c.slashCmd.TriggerID, reviewerSlackID)
 
-	return showDialog(env, s.TeamID, s.TriggerID, dialog)
+	return c.ctx.showDialog(c.slashCmd.TriggerID, dialog)
 }
 
 func newScheduleDialog(triggerID string, reviewerSlackID string) slack.Dialog {
@@ -200,19 +190,17 @@ func parseSlackIDFromString(combinedID string) string {
 	return re.FindString(combinedID)
 }
 
-func executeFindReviewers(env config.Environment, c command) error {
-	s := c.slashCommand
-
+func (c command) executeFindReviewers() error {
 	var reviewerSlackID string
 	if c.arg == "" {
-		reviewerSlackID = s.UserID
+		reviewerSlackID = c.slashCmd.UserID
 	} else {
 		reviewerSlackID = parseSlackIDFromString(c.arg)
 	}
 
-	dialog := newFindDialog(s.TriggerID, reviewerSlackID)
+	dialog := newFindDialog(c.slashCmd.TriggerID, reviewerSlackID)
 
-	return showDialog(env, s.TeamID, s.TriggerID, dialog)
+	return c.ctx.showDialog(c.slashCmd.TriggerID, dialog)
 }
 
 func newFindDialog(triggerID string, reviewerSlackID string) slack.Dialog {
@@ -245,32 +233,30 @@ type sectionMsg struct {
 	Blocks          []slack.Block `json:"blocks,omitempty"`
 }
 
-func executeShowBookings(env config.Environment, c command) error {
-	s := c.slashCommand
-
+func (c command) executeShowBookings() error {
 	var reviewerSlackID string
 	if c.arg == "" {
-		reviewerSlackID = s.UserID
+		reviewerSlackID = c.slashCmd.UserID
 	} else {
 		reviewerSlackID = parseSlackIDFromString(c.arg)
 	}
 
-	reviewer, err := models.GetReviewerBySlackID(env, reviewerSlackID)
+	reviewer, err := models.GetReviewerBySlackID(c.ctx.Env, reviewerSlackID)
 	if err != nil {
 		log.Println("[ERROR] No such reviewer registered.", err)
 		errorMsg := fmt.Sprintf("Reviewer <@%s> is not registered. Please register first using /reviewer new command.", reviewerSlackID)
-		postMessage(env, s.TeamID, s.ChannelID, toMsgOption(errorMsg))
+		c.ctx.postMessage(c.slashCmd.ChannelID, toMsgOption(errorMsg))
 		return err
 	}
-	challenge, err := models.GetChallengeSetup(env, reviewer.ChallengeName)
+	challenge, err := models.GetChallengeSetup(c.ctx.Env, reviewer.ChallengeName)
 	if err != nil {
 		log.Println("[ERROR] Invalid challenge for reviewer", err)
 		errorMsg := fmt.Sprintf("Reviewer <@%s> does not seem to have a valid challenge they registered. Please use /reviewer edit to register a challenge.", reviewerSlackID)
-		postMessage(env, s.TeamID, s.ChannelID, toMsgOption(errorMsg))
+		c.ctx.postMessage(c.slashCmd.ChannelID, toMsgOption(errorMsg))
 		return err
 	}
 
 	sections := renderBookings(reviewer, challenge)
 
-	return postMessage(env, s.TeamID, s.ChannelID, slack.MsgOptionBlocks(sections...))
+	return c.ctx.postMessage(c.slashCmd.ChannelID, slack.MsgOptionBlocks(sections...))
 }

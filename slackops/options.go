@@ -49,7 +49,7 @@ func HandleOptions(env config.Environment, readCloser io.ReadCloser) ([]byte, er
 	return nil, err
 }
 
-func handleSendChallengeOptions(env config.Environment, icb slack.InteractionCallback) ([]byte, error) {
+func handleSendChallengeOptions(env config.Environment, icb *slack.InteractionCallback) ([]byte, error) {
 	switch icb.Name {
 	case "challenge_name":
 		js, err := getChallengeList(env)
@@ -124,7 +124,7 @@ func getReviewerList(env config.Environment, challengeName string) ([]byte, erro
 	return js, nil
 }
 
-func handleNewChallengeOptions(env config.Environment, icb slack.InteractionCallback) ([]byte, error) {
+func handleNewChallengeOptions(env config.Environment, icb *slack.InteractionCallback) ([]byte, error) {
 	switch icb.Name {
 	case "github_account":
 		js, err := getAccountsList(env)
@@ -161,7 +161,7 @@ func getAccountsList(env config.Environment) ([]byte, error) {
 	return js, nil
 }
 
-func handleNewReviewerOptions(env config.Environment, icb slack.InteractionCallback) ([]byte, error) {
+func handleNewReviewerOptions(env config.Environment, icb *slack.InteractionCallback) ([]byte, error) {
 	switch icb.Name {
 	case "challenge_name":
 		js, err := getChallengeList(env)

@@ -1,31 +1,23 @@
 package slackops
 
 import (
-	"github.com/keremk/challenge-bot/config"
 	"github.com/nlopes/slack"
 )
 
-func executeChallengeHelp(env config.Environment, c command) error {
-	s := c.slashCommand
-
-	err := postMessage(env, s.TeamID, s.ChannelID, renderChallengeHelp())
-	return err
+func (c command) executeChallengeHelp() error {
+	return c.ctx.postMessage(c.slashCmd.ChannelID, renderChallengeHelp())
 }
 
-func executeSendChallenge(env config.Environment, c command) error {
-	s := c.slashCommand
+func (c command) executeSendChallenge() error {
+	dialog := sendChallengeDialog(c.slashCmd.TriggerID, c.arg)
 
-	dialog := sendChallengeDialog(s.TriggerID, c.arg)
-
-	return showDialog(env, s.TeamID, s.TriggerID, dialog)
+	return c.ctx.showDialog(c.slashCmd.TriggerID, dialog)
 }
 
-func executeNewChallenge(env config.Environment, c command) error {
-	s := c.slashCommand
+func (c command) executeNewChallenge() error {
+	dialog := newChallengeDialog(c.slashCmd.TriggerID)
 
-	dialog := newChallengeDialog(s.TriggerID)
-
-	return showDialog(env, s.TeamID, s.TriggerID, dialog)
+	return c.ctx.showDialog(c.slashCmd.TriggerID, dialog)
 }
 
 func sendChallengeDialog(triggerID string, challengeName string) slack.Dialog {
