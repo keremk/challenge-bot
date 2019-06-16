@@ -53,7 +53,7 @@ func HandleOptions(env config.Environment, readCloser io.ReadCloser) ([]byte, er
 
 func handleSendChallengeOptions(env config.Environment, icb *slack.InteractionCallback) ([]byte, error) {
 	switch icb.Name {
-	case "challenge_name":
+	case "challenge_id":
 		js, err := getChallengeList(env)
 		if err != nil {
 			return nil, err
@@ -81,7 +81,7 @@ func getChallengeList(env config.Environment) ([]byte, error) {
 	for _, challenge := range challengeList {
 		optionList = append(optionList, option{
 			Label: challenge.Name,
-			Value: challenge.Name,
+			Value: challenge.ID,
 		})
 	}
 
@@ -97,12 +97,18 @@ func getChallengeList(env config.Environment) ([]byte, error) {
 }
 
 func getReviewerList(env config.Environment, challengeName string) ([]byte, error) {
+	log.Println("[INFO] Challenge Name is ", challengeName)
 	var reviewerList []models.Reviewer
 	var err error
 	if challengeName == "" {
 		reviewerList, err = models.GetAllReviewers(env)
 	} else {
-		reviewerList, err = models.GetAllReviewersForChallenge(env, challengeName)
+		challenge, err := models.GetChallengeSetupByName(env, challengeName)
+		if err != nil {
+			log.Println("[ERROR]Challenge not found - ", challengeName)
+			return nil, err
+		}
+		reviewerList, err = models.GetAllReviewersForChallenge(env, challenge.ID)
 	}
 	if err != nil {
 		return nil, err
@@ -166,6 +172,8 @@ func getAccountsList(env config.Environment) ([]byte, error) {
 func handleNewReviewerOptions(env config.Environment, icb *slack.InteractionCallback) ([]byte, error) {
 	switch icb.Name {
 	case "challenge_name":
+		fallthrough
+	case "challenge_id":
 		js, err := getChallengeList(env)
 		if err != nil {
 			return nil, err

@@ -74,7 +74,7 @@ func reviewerDialogElements(reviewer models.Reviewer, editMode bool) []slack.Dia
 	}
 
 	githubNameEl := slack.NewTextInput("github_alias", "Github Alias", reviewer.GithubAlias)
-	challengeNameEl := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
+	challengeNameEl := newExternalOptionsDialogInput("challenge_id", "Challenge Name", "", false)
 	technologyListEl := slack.NewTextInput("technology_list", "Technology List", reviewer.TechnologyList)
 	experienceLevel := strconv.Itoa(reviewer.Experience)
 	experienceLevelEl := newStaticOptionsDialogInput("experience", "Experience Level", experienceLevel, true, experienceOptions())

@@ -122,16 +122,16 @@ func newSlotAvailability(slot *models.Slot) *SlotAvailability {
 	}
 }
 
-func FindAvailableReviewers(env config.Environment, challengeName string, tech string, weekNo, year int) (map[DayOfWeek]map[string]*SlotAvailability, error) {
-	challenge, err := models.GetChallengeSetupByName(env, challengeName)
+func FindAvailableReviewers(env config.Environment, challengeID string, tech string, weekNo, year int) (map[DayOfWeek]map[string]*SlotAvailability, error) {
+	challenge, err := models.GetChallengeSetupByID(env, challengeID)
 	if err != nil {
-		log.Println("[ERROR] Cannot find the challenge setup - ", challengeName)
+		log.Println("[ERROR] Cannot find the challenge setup - ", challengeID)
 		return nil, err
 	}
 
-	reviewers, err := models.GetAllReviewersForChallenge(env, challengeName)
+	reviewers, err := models.GetAllReviewersForChallenge(env, challenge.ID)
 	if err != nil {
-		log.Println("[ERROR] No reviewers for the challenge - ", challengeName)
+		log.Println("[ERROR] No reviewers for the challenge - ", challenge.Name)
 		return nil, err
 	}
 

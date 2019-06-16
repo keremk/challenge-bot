@@ -16,7 +16,7 @@ func (r request) handleSendChallenge() error {
 		return err
 	}
 
-	challenge, err := models.GetChallengeSetupByName(r.ctx.Env, candidate.ChallengeName)
+	challenge, err := models.GetChallengeSetupByID(r.ctx.Env, candidate.ChallengeID)
 	if err != nil {
 		return err
 	}

@@ -13,7 +13,8 @@ func (c command) executeChallengeHelp() error {
 }
 
 func (c command) executeSendChallenge() error {
-	dialog := sendChallengeDialog(c.slashCmd.TriggerID, c.arg)
+	challengeName := c.arg // Optional
+	dialog := sendChallengeDialog(c.slashCmd.TriggerID, challengeName)
 
 	return c.ctx.showDialog(c.slashCmd.TriggerID, dialog)
 }
@@ -48,10 +49,10 @@ func sendChallengeDialog(triggerID string, challengeName string) slack.Dialog {
 	candidateNameElement := slack.NewTextInput("candidate_name", "Candidate Name", "")
 	githubNameElement := slack.NewTextInput("github_alias", "Github Alias", "")
 	resumeURLElement := slack.NewTextInput("resume_URL", "Resume URL", "")
-	challengeNameElement := newExternalOptionsDialogInput("challenge_name", "Challenge Name", "", false)
+	challengeNameElement := newExternalOptionsDialogInput("challenge_id", "Challenge Name", "", false)
 
-	reviewer1OptionsElement := newExternalOptionsDialogInput("reviewer1_id", "Reviewer 1", challengeName, true)
-	reviewer2OptionsElement := newExternalOptionsDialogInput("reviewer2_id", "Reviewer 2", challengeName, true)
+	reviewer1OptionsElement := newExternalOptionsDialogInput("reviewer1_id", "Reviewer 1", "", true)
+	reviewer2OptionsElement := newExternalOptionsDialogInput("reviewer2_id", "Reviewer 2", "", true)
 
 	elements := []slack.DialogElement{
 		candidateNameElement,

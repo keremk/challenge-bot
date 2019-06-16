@@ -16,24 +16,28 @@ func (r request) handleNewReviewer() error {
 	// log.Println("[INFO] Reviewer data", addReviewerInput)
 	reviewerSlackID := addReviewerInput["reviewer_id"]
 
+	go r.createNewReviewer(reviewerSlackID, addReviewerInput)
+	return nil
+}
+
+func (r request) createNewReviewer(reviewerSlackID string, input map[string]string)  {
 	user, err := r.ctx.getUserInfo(reviewerSlackID)
 	if err != nil {
-		return err
+		log.Println("[ERROR] Could not update reviewer in db ", err)
+		r.ctx.postMessage(r.icb.Channel.ID, toMsgOption("Cannot find the reviewer in Slack, please make sure reviewer is a Slack member"))
 	}
 
-	reviewer := models.NewReviewer(user.Name, addReviewerInput)
+	reviewer := models.NewReviewer(user.Name, input)
 	// log.Println("[INFO] Reviewer is ", reviewer)
 
 	err = models.UpdateReviewer(r.ctx.Env, reviewer)
 	if err != nil {
 		log.Println("[ERROR] Could not update reviewer in db ", err)
 		r.ctx.postMessage(r.icb.Channel.ID, toMsgOption("We were not able to create the new reviewer"))
-		return err
 	}
 
-	msgText := fmt.Sprintf("We created a reviewer <@%s> in our database. They will be reviewing: %s, and their Github alias is: %s", reviewer.SlackID, reviewer.ChallengeName, reviewer.GithubAlias)
+	msgText := fmt.Sprintf("We created a reviewer <@%s> in our database. Their Github alias is: %s", reviewer.SlackID, reviewer.GithubAlias)
 	r.ctx.postMessage(r.icb.Channel.ID, toMsgOption(msgText))
-	return nil
 }
 
 func (r request) handleEditReviewer() error {

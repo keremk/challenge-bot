@@ -19,6 +19,7 @@ type Reviewer struct {
 	SlackID         string
 	TechnologyList  string
 	ChallengeName   string
+	ChallengeID			string
 	Experience      int
 	BookingsPerWeek int
 	Availability    map[string][]string
@@ -41,7 +42,7 @@ func NewReviewer(name string, input map[string]string) Reviewer {
 func reviewerFromInput(reviewer Reviewer, input map[string]string) Reviewer {
 	reviewer.GithubAlias = input["github_alias"]
 	reviewer.TechnologyList = input["technology_list"]
-	reviewer.ChallengeName = input["challenge_name"]
+	reviewer.ChallengeID = input["challenge_id"]
 
 	experience, err := strconv.Atoi(input["experience"])
 	if err != nil {
@@ -85,14 +86,14 @@ func GetAllReviewers(env config.Environment) ([]Reviewer, error) {
 	return all, err
 }
 
-func GetAllReviewersForChallenge(env config.Environment, challengeName string) ([]Reviewer, error) {
+func GetAllReviewersForChallenge(env config.Environment, challengeID string) ([]Reviewer, error) {
 	store, err := db.NewStore(env, db.ReviewersCollection)
 	if err != nil {
 		return nil, err
 	}
 
 	var all []Reviewer
-	result, err := store.FindAllWithKeyValue(reflect.TypeOf(all), "ChallengeName", challengeName)
+	result, err := store.FindAllWithKeyValue(reflect.TypeOf(all), "ChallengeID", challengeID)
 	all, ok := result.([]Reviewer)
 	if !ok {
 		return nil, errors.New("[ERROR] Cannot convert")
