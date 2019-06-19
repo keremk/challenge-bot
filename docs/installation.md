@@ -14,11 +14,11 @@ http://YOURDOMAIN.WHERE.THIS.RUNS/auth/github/install.html
 
 Once you install it (by clicking on the link above), the app should be seen as below in your Github account:
 
-![App Installation](github-add-app.png)
+![App Installation](screenshots/github-add-app.png)
 
 The app installation will take you to a next step, where you need to also authorize the application as a user - please also accept the authorization and once you do, it should show like below:
 
-![User OAuth Registration](github-user-oauth.png)
+![User OAuth Registration](screenshots/github-user-oauth.png)
 
 ## Register the Challenge App in Slack
 
@@ -36,6 +36,6 @@ http://YOURDOMAIN.WHERE.THIS.RUNS/auth/slack/install.html
 
 Keep in mind that your Slack organization administrator might have disabled installing apps except for users with admin privileges. In that case you will get an error like below:
 
-![Slack Install Error](error-slack-install.png)
+![Slack Install Error](screenshots/error-slack-install.png)
 
 In that case, you need to ask your admininstrator to install the app for you to your Slack workgroup. You will need to send the above link to your administrator.

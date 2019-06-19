@@ -11,7 +11,7 @@ You can register reviewers to review coding challenges. In order to do that:
 
 * You will be presented by the below dialog:
 
-![Add Reviewer Dialog](slack-add-reviewer.png)
+![Add Reviewer Dialog](screenshots/slack-add-reviewer.png)
 
 * In the above dialog:
   * *Reviewer* From the drop-down select the name of the reviewer you like to register
@@ -32,7 +32,7 @@ You can edit the reviewer information.
 
 * You will be presented by the below dialog:
 
-![Edit Reviewer Dialog](slack-edit-reviewer.png)
+![Edit Reviewer Dialog](screenshots/slack-edit-reviewer.png)
 
 *IMPORTANT* Keep in mind that currently due to the limitation in Slack App, Challenge App needs to be filled in, again otherwise it will overwrite the existing with no value.
 
@@ -46,7 +46,7 @@ You can edit the reviewer information.
 
 * You will be presented by the below dialog:
 
-![Update Schedule Dialog](slack-update-schedule-dialog.png)
+![Update Schedule Dialog](screenshots/slack-update-schedule-dialog.png)
 
 * You can pick the below options for the week of the year.
   * *All Weeks* Means you will be setting your schedule for all weeks in the year. Unless you override this for a specific week, this will be your default schedule.
@@ -54,6 +54,6 @@ You can edit the reviewer information.
 
 Once you pick an option, Slack will show you a grid of buttons to pick from:
 
-![Schedule Slots](slack-schedule-slots.png)
+![Schedule Slots](screenshots/slack-schedule-slots.png)
 
 You tap/click on a button to toggle your availability for that slot. In the above example, the reviewer is available for ` Thursday: 16:30-18:30 ` slot

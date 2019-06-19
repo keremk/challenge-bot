@@ -13,7 +13,7 @@ In order to send a coding challenge, you can type in the below: (We recommend yo
 
 * You will be presented by the below dialog:
 
-![Challenge Send Dialog](slack-challenge-send-dialog.png)
+![Challenge Send Dialog](screenshots/slack-challenge-send-dialog.png)
 
 * In the above dialog:
   * *Candidate Name* Type in the full name of the candidate so that you can identify them later.
@@ -26,5 +26,5 @@ In order to send a coding challenge, you can type in the below: (We recommend yo
 
 You will see a summary like below:
 
-![Slack Challenge Summary](slack-challenge-sent.png)
+![Slack Challenge Summary](screenshots/slack-challenge-sent.png)
 

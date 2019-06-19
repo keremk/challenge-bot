@@ -10,7 +10,7 @@
 
 * You will be presented by the below dialog:
 
-![Find Reviewers](slack-find-reviewers.png)
+![Find Reviewers](screenshots/slack-find-reviewers.png)
 
 * In the above dialog:
   * *Week of the Year* Specify which week you are looking the reviewers for.
@@ -20,7 +20,7 @@
 
 And based on the search parameters, you will get all available reviewers for that day of that week: (and pressing book/unbook button you can do the booking.)
 
-![Show Reviewers](slack-book-reviewers.png)
+![Show Reviewers](screenshots/slack-book-reviewers.png)
   
 ## Show all bookings of a reviewer
 
@@ -32,5 +32,5 @@ And based on the search parameters, you will get all available reviewers for tha
 
 * This will give the following response where you can update their booking info:
 
-![Show Bookings](slack-show-bookings.png)
+![Show Bookings](screenshots/slack-show-bookings.png)
 

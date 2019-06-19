@@ -14,21 +14,21 @@ You should push this to a private repository, as you most likely won't want ever
 
 Below is an example template:
 
-![Sample Challenge Template](cc-sample-template.png)
+![Sample Challenge Template](screenshots/cc-sample-template.png)
 
 ## Register your Challenge to the Tool
 
-Your challenge needs to be registered to the challenge app. In order to do that please follow the instructions in the [Registering/Editing A Challenge](register-challenge.md) section.
+Your challenge needs to be registered to the challenge app. In order to do that please follow the instructions in the [Registering/Editing A Challenge](screenshots/register-challenge.md) section.
 
 ## Send the Challenge to The Candidate
 
-Now you are ready to send the coding challenge to the candidate. In order to do this, please follow the instructions in the [Quickstart - Sending Coding Challenges](quickstart.md) section.
+Now you are ready to send the coding challenge to the candidate. In order to do this, please follow the instructions in the [Quickstart - Sending Coding Challenges](screenshots/quickstart.md) section.
 
 ## Candidate Receives Invite from Github
 
 The candidate will receive an email from Github, inviting them to the coding challenge. Below is a sample email:
 
-![Github Invite Email](github-invite-email.png)
+![Github Invite Email](screenshots/github-invite-email.png)
 
 ## The New Challenge Repo is Added for Tracking
 
@@ -36,11 +36,11 @@ The tool creates a new challenge repo from the template you provided with the na
 
 An issue will be created automatically in the challenge template repository in Github so you track this:
 
-![Github Issue](github-issue.png)
+![Github Issue](screenshots/github-issue.png)
 
 You can optionally create a project in Github such as below to track the lifecycle:
 
-![Github Kanban](cc-kanban.png)
+![Github Kanban](screenshots/cc-kanban.png)
 
 ## Candidate Sends a PR and Discussion
 
@@ -48,4 +48,4 @@ The candidate when ready sends their PR and you can have a discussion with the c
 
 Below is a sample PR conversation:
 
-![Sample PR](github-pullrequest.png)
+![Sample PR](screenshots/github-pullrequest.png)

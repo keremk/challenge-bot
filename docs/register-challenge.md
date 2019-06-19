@@ -11,7 +11,7 @@ Before sending a new challenge, you need to register the challenge template into
 
 * You will be presented by the below dialog:
 
-![Challenge New Dialog](slack-new-challenge.png)
+![Challenge New Dialog](screenshots/slack-new-challenge.png)
 
 * In the above dialog:
   * *Challenge Name* Give a user friendly and unique name to the challenge, you will be using this later to pick a template for the challenge.
@@ -31,7 +31,7 @@ You can also edit the challenge template you created.
 
 * You will be presented by the below dialog:
 
-![Challenge New Dialog](slack-new-challenge.png)
+![Challenge New Dialog](screenshots/slack-new-challenge.png)
 
 And edit the same was as in new registration.
 
