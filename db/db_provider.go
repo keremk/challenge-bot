@@ -29,6 +29,11 @@ func NewStore(env config.Environment, collection string) (CrudOps, error) {
 			env:        env,
 			collection: collection,
 		}, nil
+	case PostgreSQL:
+		return PostgreSQLDB{
+			env:   env,
+			table: collection,
+		}, nil
 	default:
 		errMsg := fmt.Sprintf("[ERROR] db provider not known or unspecified - %s", env.DbProvider)
 		return nil, errors.New(errMsg)
