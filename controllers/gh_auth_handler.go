@@ -49,8 +49,10 @@ func (gh ghAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	installationID := r.URL.Query().Get("state")
 
+	log.Println("Installation ID - ", installationID)
 	err = gh.saveToDB(authResponse, installationID)
 	if err != nil {
+		log.Println("[ERROR] Installation not registered - Installation ID - ", installationID)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
