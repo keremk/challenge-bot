@@ -57,6 +57,12 @@ func (gh ghAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: We need to provide the installation ID as a key to the final setup instead of the below hardcoded
+	// success.html page.
+	// This can be built as a web form where the user would need to provide their Github Account Name (Owner or Org) and
+	// a user friendly name to show in the app.
+	// Currently the above information needs to be edited in the database directly in githubaccounts table for the key
+	// installationid.
 	http.Redirect(w, r, "/auth/github/success.html", http.StatusFound)
 }
 

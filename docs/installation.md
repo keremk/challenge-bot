@@ -6,10 +6,10 @@ You can skip this section if the app is already installed to your Github and Sla
 
 You can use any Github account (personal or organization) to create challenge repositories. Personal accounts can have unlimited private accounts but they come with the restriction of having up to 3 contributors/repository only. This app always creates the challenge repositories as private repositories since you most likely don't want other candidates to see each other's code.
 
-Before you can use your Github account, you need to install this app to your account. You will either get a link to install this app (because somebody else is doing the hosting and sent you the link), or you are self hosting this app as your own private app. Either case you need to register this app to your Github account to be able to start using it. For self hosted case, the link will be here: (you need to be logged into to your Github account with admin privileges)
+Before you can use your Github account, you need to install this app to your account. You need to be logged into to your Github account with admin privileges)
 
 ```
-http://YOURDOMAIN.WHERE.THIS.RUNS/auth/github/install.html
+https://github.com/apps/codechallengeapp
 ```
 
 Once you install it (by clicking on the link above), the app should be seen as below in your Github account:
@@ -19,6 +19,8 @@ Once you install it (by clicking on the link above), the app should be seen as b
 The app installation will take you to a next step, where you need to also authorize the application as a user - please also accept the authorization and once you do, it should show like below:
 
 ![User OAuth Registration](screenshots/github-user-oauth.png)
+
+*TODO:* Currently the database information needs to be edited manually, so you cannot register a new Github account before asking the owner of this repository for help.
 
 ## Register the Challenge App in Slack
 
