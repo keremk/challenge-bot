@@ -51,16 +51,19 @@ func sendChallengeDialog(triggerID string, challengeName string) slack.Dialog {
 	resumeURLElement := slack.NewTextInput("resume_URL", "Resume URL", "")
 	challengeNameElement := newExternalOptionsDialogInput("challenge_id", "Challenge Name", "", false)
 
-	reviewer1OptionsElement := newExternalOptionsDialogInput("reviewer1_id", "Reviewer 1", "", true)
-	reviewer2OptionsElement := newExternalOptionsDialogInput("reviewer2_id", "Reviewer 2", "", true)
+	reviewer1El := newUsersSelect("reviewer1_id", "Reviewer 1", true)
+	reviewer2El := newUsersSelect("reviewer2_id", "Reviewer 2", true)
+
+	// reviewer1OptionsElement := newExternalOptionsDialogInput("reviewer1_id", "Reviewer 1", "", true)
+	// reviewer2OptionsElement := newExternalOptionsDialogInput("reviewer2_id", "Reviewer 2", "", true)
 
 	elements := []slack.DialogElement{
 		candidateNameElement,
 		githubNameElement,
 		resumeURLElement,
 		challengeNameElement,
-		reviewer1OptionsElement,
-		reviewer2OptionsElement,
+		reviewer1El,
+		reviewer2El,
 	}
 
 	return slack.Dialog{

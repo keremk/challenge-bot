@@ -136,3 +136,15 @@ func newStaticOptionsDialogInput(name, label, value string, optional bool, optio
 		Value:      value,
 	}
 }
+
+func newUsersSelect(name, label string, optional bool) *slack.DialogInputSelect {
+	return &slack.DialogInputSelect{
+		DialogInput: slack.DialogInput{
+			Type:     slack.InputTypeSelect,
+			Label:    label,
+			Name:     name,
+			Optional: optional,
+		},
+		DataSource: slack.DialogDataSourceUsers,
+	}
+}
