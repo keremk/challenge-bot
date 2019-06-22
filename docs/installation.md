@@ -12,15 +12,24 @@ Before you can use your Github account, you need to install this app to your acc
 https://github.com/apps/codechallengeapp
 ```
 
+When you click install on the above page, you will go through the installation process for the app. Please provide the requested grants to the app, so that it can be installed.
+
+The app installation will take you to a next step, where you need to also authorize the application as a user - please also accept the authorization.
+
+The final step will take you back to the following page:
+
+![Github Install](screenshots/github-install.png)
+
+Please provide the name of your github account or organization that you are installing this app into on that page. (E.g. for https://github.com/keremk the name of the account will be `keremk`)
+
 Once you install it (by clicking on the link above), the app should be seen as below in your Github account:
 
 ![App Installation](screenshots/github-add-app.png)
 
-The app installation will take you to a next step, where you need to also authorize the application as a user - please also accept the authorization and once you do, it should show like below:
+And also indicating your authorization as below:
 
 ![User OAuth Registration](screenshots/github-user-oauth.png)
 
-*TODO:* Currently the database information needs to be edited manually, so you cannot register a new Github account before asking the owner of this repository for help.
 
 ## Register the Challenge App in Slack
 
