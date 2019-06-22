@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Material Design for Bootstrap fonts and icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
+
+    <!-- Material Design for Bootstrap CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+
+    <link href="../default.css" rel="stylesheet">
+    <title>Coding Challenge App</title>
+  </head>
+  <body>
+    <div class="cover-container d-flex h-100 p-3 mx-auto flex-column">
+      <header class="masthead mb-auto">
+          <div class="inner">
+            <h3 class="masthead-brand">Coding Challenge App</h3>
+          </div>
+      </header>
+      <main role="main" class="inner cover">
+        <h3 class="cover-heading">Installation</h1>
+        <p class="lead">
+            You are almost done. There is one last step. You need provide the Github account name you are registering this app for. If you are registering this to your private account, it is your account name. If you are registering this to your organization account, then it is the organization name. 
+        </p>
+        <form id="installApp" onsubmit="submitForm(this);" action="createaccount" method="POST" >
+            <div class="form-group">
+                <label for="accountName" class="bmd-label-floating text-light">Github Account Name</label>
+                <input type="text" class="form-control text-light" name="accountName">
+                <span class="bmd-help text-light">E.g. For github.com/keremk you can enter keremk</span>
+            </div>
+            <div class="form-group">
+                <label for="organizationName" class="bmd-label-floating text-light">Github Organization Name</label>
+                <input type="text" class="form-control text-light" name="organizationName">
+                <span class="bmd-help">If you are registering an organization account fill this in, otherwise leave empty.</span>
+            </div>
+            <button type="submit" class="btn btn-primary btn-raised">Submit</button>
+        </form>
+      </main>
+      <footer class="mastfoot mt-auto">
+          <div class="inner, text-center">
+            <p>Cover template for <a href="https://getbootstrap.com/">Bootstrap</a>, by <a href="https://twitter.com/mdo">@mdo</a>.</p>
+          </div>
+      </footer>
+    </div>
+
+    <script>
+      function submitForm(thisForm) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const installationID = urlParams.get('installationID');
+
+        const form = thisForm
+        const hiddenField = document.createElement('input');
+        hiddenField.type = 'hidden';
+        hiddenField.name = 'installationID';
+        hiddenField.value = installationID;
+        form.appendChild(hiddenField);
+        form.submit();
+      }
+    </script>
+  </body>
+</html>

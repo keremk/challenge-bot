@@ -20,6 +20,8 @@ func SetupRoutes() {
 		w.WriteHeader(http.StatusOK)
 	})
 
+	http.Handle("/auth/", http.StripPrefix("/auth/", http.FileServer(http.Dir("./static"))))
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -41,14 +43,12 @@ func setupSlackListeners(env config.Environment) {
 		env: env,
 	})
 
-	http.Handle("/auth/slack/", http.StripPrefix("/auth/slack/", http.FileServer(http.Dir("./static/slack"))))
 	http.Handle("/auth/slack/redirect", &authHandler{
 		env: env,
 	})
 }
 
 func setupGithubListeners(env config.Environment) {
-	http.Handle("/auth/github/", http.StripPrefix("/auth/github/", http.FileServer(http.Dir("./static/github"))))
 	http.Handle("/auth/github/redirect", &ghAuthHandler{
 		env: env,
 	})
@@ -56,6 +56,9 @@ func setupGithubListeners(env config.Environment) {
 		env: env,
 	})
 	http.Handle("/github/events", &ghEventsHandler{
+		env: env,
+	})
+	http.Handle("/auth/github/createaccount", &ghAccountHandler{
 		env: env,
 	})
 }

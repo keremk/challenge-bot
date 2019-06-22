@@ -16,6 +16,7 @@ const ReviewersCollection = "reviewers"
 
 type CrudOps interface {
 	Update(key string, obj interface{}) error
+	Merge(key string, values map[string]interface{}) error
 	FindByID(id string, obj interface{}) error
 	FindFirst(key, value string, obj interface{}) error
 	FindAll(itemType reflect.Type) (interface{}, error)

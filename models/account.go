@@ -34,12 +34,26 @@ func GetGithubAccount(env config.Environment, name string) (GithubAccount, error
 	return account, err
 }
 
-func UpdateGithubAccount(env config.Environment, account GithubAccount) error {
+func CreateGithubAccount(env config.Environment, account GithubAccount) error {
 	store, err := db.NewStore(env, db.GithubAccountsCollection)
 	if err != nil {
 		return err
 	}
 	return store.Update(account.InstallationID, account)
+}
+
+func EditGithubAccount(env config.Environment, installationID, org, owner, name string) error {
+	store, err := db.NewStore(env, db.GithubAccountsCollection)
+	if err != nil {
+		return err
+	}
+
+	account := map[string]interface{}{
+		"Owner": owner,
+		"Org":   org,
+		"Name":  name,
+	}
+	return store.Merge(installationID, account)
 }
 
 func GetAllAccounts(env config.Environment) ([]GithubAccount, error) {

@@ -26,7 +26,23 @@ func (s FirestoreDb) Update(key string, obj interface{}) error {
 
 	_, err = client.Collection(s.collection).Doc(key).Set(ctx, obj)
 	if err != nil {
-		log.Println("[ERROR] cannot write data to Firestore for key=", key, err)
+		log.Printf("[ERROR] cannot merge data to Firestore for key %s - %s", key, err)
+	}
+	return err
+}
+
+func (s FirestoreDb) Merge(key string, values map[string]interface{}) error {
+	client, ctx, err := s.getClient()
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	opts := firestore.MergeAll
+
+	_, err = client.Collection(s.collection).Doc(key).Set(ctx, values, opts)
+	if err != nil {
+		log.Printf("[ERROR] cannot merge data to Firestore for key %s - %s", key, err)
 	}
 	return err
 }

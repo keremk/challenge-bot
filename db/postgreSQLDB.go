@@ -18,6 +18,11 @@ func (s PostgreSQLDB) Update(key string, obj interface{}) error {
 	return nil
 }
 
+func (s PostgreSQLDB) Merge(key string, values map[string]interface{}) error {
+
+	return nil
+}
+
 func (s PostgreSQLDB) FindByID(id string, obj interface{}) error {
 
 	return nil

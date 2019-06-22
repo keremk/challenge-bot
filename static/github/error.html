@@ -22,13 +22,11 @@
           </div>
       </header>
       <main role="main" class="inner cover">
-        <h3 class="cover-heading">Installation</h1>
+        <h3 class="cover-heading">Error</h1>
         <p class="lead">
-            This app allows you to send coding challenges to candidates from Slack. In order to install this app please click the "Install" button you see below. You will then be redirected to the Github application page. From their you can again click the "Install" button to authorize using this app in your Github account. Make sure you are logged into Github with admin privileges before you do so. 
+            There was an error registering your account.
         </p>
-        <p class="lead, text-center">
-          <a href="https://github.com/apps/codechallengeapp" type="button" class="btn btn-primary">Install</a>
-        </p>
+        <p class="lead" id="errorMsg"></p>
       </main>
       <footer class="mastfoot mt-auto">
           <div class="inner, text-center">
@@ -36,5 +34,11 @@
           </div>
       </footer>
     </div>
+    <script>
+          const urlParams = new URLSearchParams(window.location.search);
+          const error = urlParams.get('error');
+          const errorMsgEl = document.getElementById('errorMsg')
+          errorMsgEl.textContent = error
+      </script>
   </body>
 </html>

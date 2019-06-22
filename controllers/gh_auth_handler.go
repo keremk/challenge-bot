@@ -3,6 +3,7 @@ package controllers
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -63,7 +64,8 @@ func (gh ghAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// a user friendly name to show in the app.
 	// Currently the above information needs to be edited in the database directly in githubaccounts table for the key
 	// installationid.
-	http.Redirect(w, r, "/auth/github/success.html", http.StatusFound)
+	url := fmt.Sprintf("/auth/github/account.html?installationID=%s", installationID)
+	http.Redirect(w, r, url, http.StatusFound)
 }
 
 func (gh ghAuthHandler) callbackGithub(code string) (*http.Response, error) {
@@ -130,7 +132,7 @@ func (gh ghAuthHandler) readAndParse(resp *http.Response) (ghAuthResponse, error
 func (gh ghAuthHandler) saveToDB(resp ghAuthResponse, installationID string) error {
 	account := models.NewGithubAccount(installationID, resp.AccessToken)
 
-	err := models.UpdateGithubAccount(gh.env, account)
+	err := models.CreateGithubAccount(gh.env, account)
 	if err != nil {
 		return err
 	}
