@@ -9,11 +9,11 @@ import (
 )
 
 type GithubAccount struct {
-	Name           string
-	Owner          string
-	Org            string
-	InstallationID string
-	AccessToken    string
+	Name           string 	`bson:"Name"`
+	Owner          string 	`bson:"Owner"`
+	Org            string 	`bson:"Org"`
+	InstallationID string 	`bson:"InstallationID"`
+	AccessToken    string 	`bson:"AccessToken"`
 }
 
 func NewGithubAccount(installationID, token string) GithubAccount {

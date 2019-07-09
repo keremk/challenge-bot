@@ -14,22 +14,22 @@ import (
 type SlotID = string
 
 type Slot struct {
-	ID        string
-	Ordinal   int
-	Name      string
-	Day       string
-	StartTime string
-	EndTime   string
+	ID        string `bson:"ID"`
+	Ordinal   int    `bson:"Ordinal"`
+	Name      string `bson:"Name"`
+	Day       string `bson:"Day"`
+	StartTime string `bson:"StartTime"`
+	EndTime   string `bson:"EndTime"`
 }
 
 type Challenge struct {
-	ID                string
-	Name              string
-	GithubAccountName string
-	TemplateRepo      string
-	RepoNameFormat    string
-	CreatedByTeamID   string
-	Slots             map[SlotID]*Slot
+	ID                string           `bson:"ID"`
+	Name              string           `bson:"Name"`
+	GithubAccountName string           `bson:"GithubAccountName"`
+	TemplateRepo      string           `bson:"TemplateRepo"`
+	RepoNameFormat    string           `bson:"RepoNameFormat"`
+	CreatedByTeamID   string           `bson:"CreatedByTeamID"`
+	Slots             map[SlotID]*Slot `bson:"Slots"`
 }
 
 func NewChallenge(input map[string]string) Challenge {

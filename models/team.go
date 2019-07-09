@@ -6,10 +6,10 @@ import (
 )
 
 type SlackTeam struct {
-	ID        string
-	Name      string
-	BotToken  string
-	BotUserID string
+	ID        string `bson:"ID"`
+	Name      string `bson:"Name"`
+	BotToken  string `bson:"BotToken"`
+	BotUserID string `bson:"BotUserID"`
 }
 
 func GetSlackTeam(env config.Environment, id string) (SlackTeam, error) {

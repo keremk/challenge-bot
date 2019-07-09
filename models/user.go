@@ -6,8 +6,8 @@ import (
 )
 
 type SlackUser struct {
-	ID    string
-	Token string
+	ID    string `bson:"ID"`
+	Token string `bson:"Token"`
 }
 
 func GetSlackUser(env config.Environment, id string) (SlackUser, error) {

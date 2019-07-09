@@ -13,17 +13,17 @@ import (
 )
 
 type Reviewer struct {
-	ID              string
-	Name            string
-	GithubAlias     string
-	SlackID         string
-	TechnologyList  string
-	ChallengeName   string
-	ChallengeID			string
-	Experience      int
-	BookingsPerWeek int
-	Availability    map[string][]string
-	Bookings        map[string][]string
+	ID              string              `bson:"ID"`
+	Name            string              `bson:"Name"`
+	GithubAlias     string              `bson:"GithubAlias"`
+	SlackID         string              `bson:"SlackID"`
+	TechnologyList  string              `bson:"TechnologyList"`
+	ChallengeName   string              `bson:"ChallengeName"`
+	ChallengeID     string              `bson:"ChallengeID"`
+	Experience      int                 `bson:"Experience"`
+	BookingsPerWeek int                 `bson:"BookingsPerWeek"`
+	Availability    map[string][]string `bson:"Availability"`
+	Bookings        map[string][]string `bson:"Bookings"`
 }
 
 func NewReviewer(name string, input map[string]string) Reviewer {

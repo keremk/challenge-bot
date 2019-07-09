@@ -1,10 +1,10 @@
 package models
 
 type Candidate struct {
-	Name        string
-	GithubAlias string
-	ResumeURL   string
-	ChallengeID string
+	Name        string `bson:"Name"`
+	GithubAlias string `bson:"GithubAlias"`
+	ResumeURL   string `bson:"ResumeURL"`
+	ChallengeID string `bson:"ChallengeID"`
 }
 
 func NewCandidate(input map[string]string) Candidate {

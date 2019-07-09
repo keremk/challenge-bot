@@ -8,7 +8,7 @@ import (
 )
 
 type ChallengeSetup struct {
-	ID              string
+	ID              string 
 	Name            string
 	GithubOwner     string
 	GithubOrg       string
