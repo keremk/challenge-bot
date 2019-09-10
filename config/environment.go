@@ -22,6 +22,8 @@ type Environment struct {
 	GCloudProjectID          string `envconfig:"GCLOUD_PROJECT_ID" required:"true"`
 	DbProvider               string `envconfig:"DB_PROVIDER" required:"true"`
 	DebugOn                  bool   `envconfig:"DEBUG_ON" required:"true"`
+	MongoDBConnectionString  string `envconfig:"MONGODB_CONNECTION_STRING" required:"true"`
+	MongoDBDatabaseName      string `envconfig:"MONGODB_DATABASE_NAME" required:"true"`
 }
 
 func NewEnvironment(params ...string) Environment {

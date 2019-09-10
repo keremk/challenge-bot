@@ -16,7 +16,8 @@ RUN go mod download
 # COPY the source code as the last step
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -v -o challenge
+RUN cd cmd/challenge && \
+    CGO_ENABLED=0 GOOS=linux go build -a -v -o challenge
 
 # Use a Docker multi-stage build to create a lean production image.
 # https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
@@ -24,7 +25,7 @@ FROM alpine
 RUN apk add --no-cache ca-certificates
 
 # Copy the binary to the production image from the builder stage.
-COPY --from=builder /go/src/github.com/keremk/challenge-bot/challenge /challenge
+COPY --from=builder /go/src/github.com/keremk/challenge-bot/cmd/challenge/challenge /challenge
 COPY --from=builder /go/src/github.com/keremk/challenge-bot/challenge-db-key.json /challenge-db-key.json
 COPY --from=builder /go/src/github.com/keremk/challenge-bot/codechallengeapp.pem /codechallengeapp.pem
 COPY --from=builder /go/src/github.com/keremk/challenge-bot/static/. /static/.

@@ -78,7 +78,7 @@ func (s MongoDB) FindFirst(key, value string, obj interface{}) error {
 	filter := bson.D{{key, value}}
 	err = col.FindOne(ctx, filter).Decode(obj)
 	if err != nil {
-		log.Printf("[ERROR] Cannot find the document with key - %s", err)
+		log.Printf("[ERROR] Cannot find the document with key %s, value %s in collection %s - %s", key, value, s.collection, err)
 	}
 
 	return err
@@ -138,9 +138,9 @@ func (s MongoDB) find(itemType reflect.Type, key, value string) (interface{}, er
 func (s MongoDB) getClient() (*mongo.Client, context.Context, error) {
 	ctx := context.Background()
 
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	clientOptions := options.Client().ApplyURI(s.env.MongoDBConnectionString)
 
-	client, err := mongo.Connect(context.TODO(), clientOptions)
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Fatal(err)
 	}

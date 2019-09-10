@@ -39,7 +39,7 @@ func UpdateSlackTeam(env config.Environment, team SlackTeam) error {
 func getTeamID(env config.Environment, id string) string {
 	var teamIDLookup string
 	if env.DebugOn {
-		teamIDLookup = "ADMIN"
+		teamIDLookup = "TGB941BGQ"
 	} else {
 		teamIDLookup = id
 	}

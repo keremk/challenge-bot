@@ -37,8 +37,9 @@ func NewStore(env config.Environment, collection string) (CrudOps, error) {
 		}, nil
 	case Mongo:
 		return MongoDB{
-			env:   env,
+			env:        env,
 			collection: collection,
+			database:   env.MongoDBDatabaseName,
 		}, nil
 	default:
 		errMsg := fmt.Sprintf("[ERROR] db provider not known or unspecified - %s", env.DbProvider)
